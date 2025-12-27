@@ -3,12 +3,14 @@ use std::fmt;
 
 pub enum Insn {
     Noop,
+    Out(char),
 }
 
 impl fmt::Display for Insn {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Insn::Noop => write!(f, "Noop"),
+            Insn::Out(c) => write!(f, "Out <{c}>"),
         }
     }
 }
@@ -34,7 +36,11 @@ pub fn get(cpu: &mut Cpu) -> Insn {
         16 => todo!("return Wmem instruction"),
         17 => todo!("return Call instruction"),
         18 => todo!("return Ret instruction"),
-        19 => todo!("return Out instruction"),
+        19 => {
+            let c = cpu.mem[cpu.ip + 1];
+            cpu.ip += 2;
+            Insn::Out(std::char::from_u32(c as u32).expect("failed to convert char"))
+        }
         20 => todo!("return In instruction"),
         21 => {
             cpu.ip += 1;
