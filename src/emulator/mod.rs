@@ -38,7 +38,7 @@ impl Cpu {
         //   - roms[i] -> low byte of mem[i]
         //   - roms[i + 1] -> high byte of mem[i]
         // Programs are loaded into memory starting at address 0
-        assert!(roms.len() % 2 == 0, "ROMs size is odd");
+        assert!(roms.len().is_multiple_of(2), "ROMs size is odd");
         let footprint = roms.len() / 2;
         assert!(footprint <= layout::MEM_SIZE);
 
@@ -58,6 +58,11 @@ impl Cpu {
         cpu
     }
 
+    pub fn reset(&mut self) {
+        self.regs = [0; layout::NUM_REGS];
+        self.ip = 0;
+    }
+
     pub fn fetch(&mut self) -> u16 {
         assert!(self.ip <= layout::MEM_MAX);
         let word = self.mem[self.ip];
@@ -66,7 +71,10 @@ impl Cpu {
     }
 
     pub fn disassemble(&mut self) {
-        // We just run step without executing them
+        // We just run step without executing them. Reset the CPU before
+        // desassembling. This will allow for example to disassemble some
+        // instruction and run it after disassembling.
+        self.reset();
         for _ in 0..self.footprint {
             print!("Mem[{:05}]: ", self.ip);
             self.step();

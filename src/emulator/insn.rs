@@ -1,4 +1,4 @@
-use crate::emulator::{Cpu, layout};
+use crate::emulator::Cpu;
 use std::fmt;
 
 pub enum Insn {

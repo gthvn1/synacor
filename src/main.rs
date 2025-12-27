@@ -12,7 +12,7 @@ fn main() -> io::Result<()> {
     for byte in data.iter().take(16) {
         print!("{:02X}  ", byte);
     }
-    println!("");
+    println!();
 
     let mut cpu = emulator::Cpu::load(data);
     // Print 8 first bytes of memory
