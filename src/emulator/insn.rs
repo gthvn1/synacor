@@ -22,33 +22,27 @@ impl fmt::Display for Insn {
         }
     }
 }
+
 pub fn get(cpu: &mut Cpu) -> Insn {
-    assert!(cpu.ip <= layout::MEM_MAX);
-    match cpu.mem[cpu.ip] {
-        0 => {
-            cpu.ip += 1;
-            Insn::Halt
-        }
+    match cpu.fetch() {
+        0 => Insn::Halt,
         1 => todo!("return Set instruction"),
         2 => todo!("return Push instruction"),
         3 => todo!("return Pop instruction"),
         4 => todo!("return Eq instruction"),
         5 => todo!("return Gt instruction"),
         6 => {
-            let addr = cpu.mem[cpu.ip + 1];
-            cpu.ip += 2;
+            let addr = cpu.fetch();
             Insn::Jmp(addr as usize)
         }
         7 => {
-            let cond = cpu.mem[cpu.ip + 1];
-            let addr = cpu.mem[cpu.ip + 2];
-            cpu.ip += 3;
+            let cond = cpu.fetch();
+            let addr = cpu.fetch();
             Insn::Jt(cond as usize, addr as usize)
         }
         8 => {
-            let cond = cpu.mem[cpu.ip + 1];
-            let addr = cpu.mem[cpu.ip + 2];
-            cpu.ip += 3;
+            let cond = cpu.fetch();
+            let addr = cpu.fetch();
             Insn::Jf(cond as usize, addr as usize)
         }
         9 => todo!("return Add instruction"),
@@ -62,15 +56,11 @@ pub fn get(cpu: &mut Cpu) -> Insn {
         17 => todo!("return Call instruction"),
         18 => todo!("return Ret instruction"),
         19 => {
-            let c = cpu.mem[cpu.ip + 1];
-            cpu.ip += 2;
+            let c = cpu.fetch();
             Insn::Out(std::char::from_u32(c as u32).expect("failed to convert char"))
         }
         20 => todo!("return In instruction"),
-        21 => {
-            cpu.ip += 1;
-            Insn::Noop
-        }
+        21 => Insn::Noop,
         _ => panic!("Unknown opcode: {}", cpu.mem[cpu.ip]),
     }
 }

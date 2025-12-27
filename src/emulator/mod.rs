@@ -58,6 +58,13 @@ impl Cpu {
         cpu
     }
 
+    pub fn fetch(&mut self) -> u16 {
+        assert!(self.ip <= layout::MEM_MAX);
+        let word = self.mem[self.ip];
+        self.ip += 1;
+        word
+    }
+
     pub fn disassemble(&mut self) {
         // We just run step without executing them
         for _ in 0..self.footprint {
