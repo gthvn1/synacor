@@ -1,5 +1,6 @@
 mod insn;
 
+#[allow(unused)]
 mod layout {
     /// Total number of addressable memory words.
     /// Memory addresses range from 0 to MEM_SIZE - 1.
@@ -28,6 +29,7 @@ pub struct Cpu {
     pub footprint: u16, // keep the program's memory footprint
 }
 
+#[allow(unused)]
 impl Cpu {
     pub fn load(roms: Vec<u8>) -> Cpu {
         // The format of the ROM is each number is stored as a 16 bit little endian pair
@@ -58,16 +60,22 @@ impl Cpu {
         cpu
     }
 
-    pub fn reset(&mut self) {
+    fn reset(&mut self) {
         self.regs.fill(0);
         self.ip = 0;
     }
 
-    pub fn fetch(&mut self) -> u16 {
+    fn fetch(&mut self) -> u16 {
         assert!(self.ip <= layout::MEM_MAX);
         let word = self.mem[self.ip];
         self.ip += 1;
         word
+    }
+
+    fn set_ip(&mut self, ip: u16) {
+        assert!(ip as usize >= layout::MEM_MIN);
+        assert!(ip as usize <= layout::MEM_MAX);
+        self.ip = ip as usize;
     }
 
     pub fn disassemble(&mut self) {
@@ -77,13 +85,48 @@ impl Cpu {
         self.reset();
         for _ in 0..self.footprint {
             print!("Mem[{:05} (0x{:05X})]: ", self.ip, self.ip);
-            self.step();
+            let insn = insn::get(self);
+            println!("{}", insn);
         }
     }
 
-    pub fn step(&mut self) {
-        // First we need to read the opcode
-        let insn = insn::get(self);
-        println!("{}", insn);
+    #[allow(unused)]
+    pub fn run(&mut self) {
+        self.reset();
+        loop {
+            println!("At ip {:04X}", self.ip);
+            match insn::get(self) {
+                insn::Insn::Add(a, b, c) => todo!("Execute add"),
+                insn::Insn::And(a, b, c) => todo!("Execute and"),
+                insn::Insn::Call(a) => todo!("Execute call"),
+                insn::Insn::Eq(a, b, c) => todo!("Execute eq"),
+                insn::Insn::Gt(a, b, c) => todo!("Execute gt"),
+                insn::Insn::Halt => break,
+                insn::Insn::In(a) => todo!("Execute in"),
+                insn::Insn::Jmp(a) => self.set_ip(a),
+                insn::Insn::Jt(a, b) => {
+                    if a != 0 {
+                        self.set_ip(b)
+                    }
+                }
+                insn::Insn::Jf(a, b) => {
+                    if a == 0 {
+                        self.set_ip(b)
+                    }
+                }
+                insn::Insn::Mod(a, b, c) => todo!("Execute mod "),
+                insn::Insn::Mult(a, b, c) => todo!("Execute mult "),
+                insn::Insn::Noop => {}
+                insn::Insn::Not(a, b) => todo!("Execute not"),
+                insn::Insn::Or(a, b, c) => todo!("Execute or"),
+                insn::Insn::Out(a) => print!("{a}"),
+                insn::Insn::Pop(a) => todo!("Execute pop"),
+                insn::Insn::Push(a) => todo!("Execute push"),
+                insn::Insn::Ret => todo!("Execute ret"),
+                insn::Insn::Rmem(a, b) => todo!("Execute rmem"),
+                insn::Insn::Wmem(a, b) => todo!("Execute wmem"),
+                insn::Insn::Set(a, b) => todo!("Execute set"),
+            }
+        }
     }
 }

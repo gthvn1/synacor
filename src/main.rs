@@ -23,5 +23,6 @@ fn main() -> io::Result<()> {
     println!("{} words loaded in memory", cpu.footprint);
 
     cpu.disassemble();
+    cpu.run();
     Ok(())
 }
