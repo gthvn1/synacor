@@ -1,4 +1,4 @@
-mod opcode;
+mod insn;
 
 mod layout {
     /// Total number of addressable memory words.
@@ -61,12 +61,14 @@ impl Cpu {
     pub fn disassemble(&mut self) {
         // We just run step without executing them
         for _ in 0..self.footprint {
+            print!("Mem[{:05}]: ", self.ip);
             self.step();
         }
     }
+
     pub fn step(&mut self) {
         // First we need to read the opcode
-        let insn = opcode::get(self);
-        println!("step: {}", insn);
+        let insn = insn::get(self);
+        println!("{}", insn);
     }
 }
