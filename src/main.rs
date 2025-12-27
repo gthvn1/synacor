@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
 mod emulator;
 
@@ -20,6 +20,20 @@ fn main() -> io::Result<()> {
         println!("{:04X}: {:02X}  ", idx, byte);
     }
 
+    // Enter debug mode:
+    loop {
+        print!("> ");
+        io::stdout().flush().unwrap();
+
+        let mut buf = String::new();
+        io::stdin()
+            .read_line(&mut buf)
+            .expect("failed to read input");
+        match buf.trim() {
+            "q" => break,
+            _ => println!("you print {buf}"),
+        }
+    }
     println!("{} words loaded in memory", cpu.footprint);
 
     cpu.disassemble();
