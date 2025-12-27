@@ -14,12 +14,18 @@ fn main() -> io::Result<()> {
     }
     println!("");
 
-    let cpu = emulator::Cpu::load(data);
+    let mut cpu = emulator::Cpu::load(data);
     // Print 8 first bytes of memory
     for (idx, byte) in cpu.mem.iter().take(8).enumerate() {
         println!("{:04X}: {:02X}  ", idx, byte);
     }
 
     println!("{} words loaded in memory", cpu.footprint);
+
+    // Try to execute some steps
+    cpu.step();
+    cpu.step();
+    cpu.step();
+    cpu.step();
     Ok(())
 }

@@ -1,9 +1,4 @@
-use std::{alloc::Layout, ffi::FromBytesWithNulError};
-
-// In memory we should have the instructions
-enum Insn {
-    Noop,
-}
+mod opcode;
 
 mod layout {
     /// Total number of addressable memory words.
@@ -29,7 +24,7 @@ mod layout {
 pub struct Cpu {
     pub mem: [u16; layout::MEM_SIZE], // The size will depend of the ROMs
     pub regs: [u16; layout::NUM_REGS],
-    pub ip: u16,        // Instruction pointer
+    pub ip: usize,      // Instruction pointer
     pub footprint: u16, // keep the program's memory footprint
 }
 
@@ -61,5 +56,11 @@ impl Cpu {
         }
 
         cpu
+    }
+
+    pub fn step(&mut self) {
+        // First we need to read the opcode
+        let insn = opcode::get(self);
+        println!("step: {}", insn);
     }
 }
