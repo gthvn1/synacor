@@ -59,7 +59,7 @@ impl Cpu {
     }
 
     pub fn reset(&mut self) {
-        self.regs = [0; layout::NUM_REGS];
+        self.regs.fill(0);
         self.ip = 0;
     }
 
@@ -76,7 +76,7 @@ impl Cpu {
         // instruction and run it after disassembling.
         self.reset();
         for _ in 0..self.footprint {
-            print!("Mem[{:05}]: ", self.ip);
+            print!("Mem[{:05} (0x{:05X})]: ", self.ip, self.ip);
             self.step();
         }
     }
