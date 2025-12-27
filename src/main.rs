@@ -22,10 +22,6 @@ fn main() -> io::Result<()> {
 
     println!("{} words loaded in memory", cpu.footprint);
 
-    // Try to execute some steps
-    cpu.step();
-    cpu.step();
-    cpu.step();
-    cpu.step();
+    cpu.disassemble();
     Ok(())
 }
