@@ -39,7 +39,7 @@ pub fn gen_insn(opcode: usize, cpu: &mut Cpu) -> Option<Insn> {
             "Unknown opcode {opcode} at {:05} (0x{:05x}). CPU halted",
             cpu.ip, cpu.ip
         );
-        cpu.halt();
+        cpu.halt("unknown opcode");
         return None;
     }
 

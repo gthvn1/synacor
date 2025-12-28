@@ -78,8 +78,10 @@ impl Cpu {
         }
     }
 
-    // Read the value at the given address
-    fn read(&self, addr: u16) -> u16 {
+    // Resolve the addr, if it is in the memroy range the address is returned
+    // and if it is in the register range it is the content of the register that
+    // is returned
+    fn resolve_addr(&self, addr: u16) -> u16 {
         let addr = addr as usize;
         assert!((layout::MEM_MIN..=layout::REG_MAX).contains(&addr));
         if addr <= layout::MEM_MAX {
@@ -87,6 +89,19 @@ impl Cpu {
             addr as u16
         } else {
             // It is a register
+            let reg_id = addr - layout::REG_MIN;
+            self.regs[reg_id]
+        }
+    }
+
+    // Read the value at the given address. If it is in memory range it returns the content
+    // at this address, otherwise it returns the content of the register.
+    fn read(&self, addr: u16) -> u16 {
+        let addr = addr as usize;
+        assert!((layout::MEM_MIN..=layout::REG_MAX).contains(&addr));
+        if addr <= layout::MEM_MAX {
+            self.mem[addr]
+        } else {
             let reg_id = addr - layout::REG_MIN;
             self.regs[reg_id]
         }
@@ -139,53 +154,54 @@ impl Cpu {
         out
     }
 
-    pub fn halt(&mut self) {
+    pub fn halt(&mut self, reason: &str) {
+        println!("CPU halted: {}", reason);
         self.state = State::Stopped;
     }
 
     pub fn step(&mut self) {
         let Some(insn) = insn::get(self) else { return };
         match insn {
-            insn::Insn::Add(a, b, c) => todo!("Execute add"),
-            insn::Insn::And(a, b, c) => todo!("Execute and"),
-            insn::Insn::Call(a) => todo!("Execute call"),
-            insn::Insn::Eq(a, b, c) => todo!("Execute eq"),
-            insn::Insn::Gt(a, b, c) => todo!("Execute gt"),
-            insn::Insn::Halt => self.halt(),
-            insn::Insn::In(a) => todo!("Execute in"),
+            insn::Insn::Add(a, b, c) => self.halt("instruction not implemented: add"),
+            insn::Insn::And(a, b, c) => self.halt("instruction not implemented: and"),
+            insn::Insn::Call(a) => self.halt("instruction not implemented: call"),
+            insn::Insn::Eq(a, b, c) => self.halt("instruction not implemented: eq"),
+            insn::Insn::Gt(a, b, c) => self.halt("instruction not implemented: gt"),
+            insn::Insn::Halt => self.halt("Reached Halt instruction"),
+            insn::Insn::In(a) => self.halt("instruction not implemented: in"),
             insn::Insn::Jmp(a) => {
                 // Not sure that address to jmp can be register
-                let value = self.read(a);
+                let value = self.resolve_addr(a);
                 self.set_ip(value)
             }
             insn::Insn::Jt(a, b) => {
-                let cond = self.read(a);
+                let cond = self.resolve_addr(a);
                 if cond != 0 {
                     // Not sure that address to jmp can be register
-                    let addr = self.read(b);
+                    let addr = self.resolve_addr(b);
                     self.set_ip(addr)
                 }
             }
             insn::Insn::Jf(a, b) => {
-                let cond = self.read(a);
+                let cond = self.resolve_addr(a);
                 if cond == 0 {
                     // Not sure that address to jmp can be register
-                    let addr = self.read(b);
+                    let addr = self.resolve_addr(b);
                     self.set_ip(addr)
                 }
             }
-            insn::Insn::Mod(a, b, c) => todo!("Execute mod "),
-            insn::Insn::Mult(a, b, c) => todo!("Execute mult "),
+            insn::Insn::Mod(a, b, c) => self.halt("instruction not implemented: mod "),
+            insn::Insn::Mult(a, b, c) => self.halt("instruction not implemented: mult "),
             insn::Insn::Noop => {}
-            insn::Insn::Not(a, b) => todo!("Execute not"),
-            insn::Insn::Or(a, b, c) => todo!("Execute or"),
+            insn::Insn::Not(a, b) => self.halt("instruction not implemented: not"),
+            insn::Insn::Or(a, b, c) => self.halt("instruction not implemented: or"),
             insn::Insn::Out(a) => print!("{a}"),
-            insn::Insn::Pop(a) => todo!("Execute pop"),
-            insn::Insn::Push(a) => todo!("Execute push"),
-            insn::Insn::Ret => todo!("Execute ret"),
-            insn::Insn::Rmem(a, b) => todo!("Execute rmem"),
-            insn::Insn::Wmem(a, b) => todo!("Execute wmem"),
-            insn::Insn::Set(a, b) => todo!("Execute set"),
+            insn::Insn::Pop(a) => self.halt("instruction not implemented: pop"),
+            insn::Insn::Push(a) => self.halt("instruction not implemented: push"),
+            insn::Insn::Ret => self.halt("instruction not implemented: ret"),
+            insn::Insn::Rmem(a, b) => self.halt("instruction not implemented: rmem"),
+            insn::Insn::Wmem(a, b) => self.halt("instruction not implemented: wmem"),
+            insn::Insn::Set(a, b) => self.halt("instruction not implemented: set"),
         }
     }
 
@@ -210,10 +226,11 @@ impl Cpu {
 
         println!("Disassemble from {} to {}", layout::MEM_MIN, upper);
         while self.ip <= upper {
+            print!("Mem[{:05} (0x{:05x})]", self.ip, self.ip);
             if let Some(insn) = insn::get(self) {
-                println!("Mem[{:05} (0x{:05x})] -> {}", self.ip, self.ip, insn);
+                println!("-> {}", insn);
             } else {
-                println!("Mem[{:05} (0x{:05x})] -> <skipped>", self.ip, self.ip);
+                println!("-> <skipped>");
             }
         }
     }
