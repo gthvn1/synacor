@@ -17,12 +17,19 @@ fn main() -> io::Result<()> {
         cpu.footprint, &args.filename
     );
 
+    if args.disassemble {
+        cpu.disassemble();
+        println!("--- Done ---");
+        std::process::exit(0);
+    }
+
     if let Some(bp) = args.breakpoint {
         cpu.set_breakpoint(bp);
     }
 
     // Enter debug mode by default
     // TODO: use a parameter
+
     println!("[b]reak, [c]ontinue, [p]rint, [q]uit, [r]un, [s]tep");
     loop {
         print!("debug> ");

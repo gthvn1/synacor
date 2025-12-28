@@ -190,6 +190,15 @@ impl Cpu {
         }
     }
 
+    pub fn disassemble(&mut self) {
+        self.reset();
+        let upper = self.footprint as usize;
+        (layout::MEM_MIN..=upper).for_each(|i| {
+            let insn = insn::get(self);
+            println!("Mem[{:05} (0x{:05x})] -> {}", i, i, insn);
+        })
+    }
+
     pub fn run(&mut self) {
         self.reset();
         self.cont();
