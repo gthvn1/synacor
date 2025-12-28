@@ -92,16 +92,31 @@ impl Cpu {
         self.ip = ip as usize;
     }
 
-    pub fn disassemble(&mut self) {
-        // We just run step without executing them. Reset the CPU before
-        // desassembling. This will allow for example to disassemble some
-        // instruction and run it after disassembling.
-        self.reset();
-        for _ in 0..self.footprint {
-            print!("Mem[{:05} (0x{:05X})]: ", self.ip, self.ip);
-            let insn = insn::get(self);
-            println!("{}", insn);
+    pub fn print(&self) -> String {
+        let mut out = String::new();
+
+        let start = self.ip.saturating_sub(5).max(layout::MEM_MIN);
+        let end = self.ip.saturating_add(5).min(layout::MEM_MAX);
+
+        for addr in start..=end {
+            if addr == self.ip {
+                out.push_str(&format!(
+                    "=> Mem[{:05} (0x{:05X})]: 0x{:05x}\n",
+                    addr,
+                    addr,
+                    self.read(addr.try_into().unwrap())
+                ));
+            } else {
+                out.push_str(&format!(
+                    "   Mem[{:05} (0x{:05X})]: 0x{:05x}\n",
+                    addr,
+                    addr,
+                    self.read(addr.try_into().unwrap())
+                ));
+            }
         }
+
+        out
     }
 
     #[allow(unused)]

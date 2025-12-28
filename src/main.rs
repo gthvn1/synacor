@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
         match buf.trim() {
             "b" => println!("Not implemented"),
             "c" => println!("Not implemented"),
-            "p" => println!("Not implemented"),
+            "p" => println!("{}", cpu.print()),
             "q" => break,
             "r" => {
                 cpu.run();
