@@ -34,6 +34,7 @@ pub struct Cpu {
     pub ip: usize,      // Instruction pointer
     pub footprint: u16, // keep the program's memory footprint
     state: State,
+    breakpoint: Option<u16>,
 }
 
 #[allow(unused)]
@@ -57,6 +58,7 @@ impl Cpu {
             ip: 0,
             footprint: footprint as u16,
             state: State::Stopped,
+            breakpoint: None,
         };
 
         for (idx, chunk) in roms.chunks_exact(2).enumerate() {
@@ -66,6 +68,14 @@ impl Cpu {
         }
 
         cpu
+    }
+
+    pub fn set_breakpoint(&mut self, addr: u16) {
+        if (layout::MEM_MIN..=layout::MEM_MAX).contains(&(addr as usize)) {
+            self.breakpoint = Some(addr);
+        } else {
+            println!("Failed to set addr, {addr} is not in memory");
+        }
     }
 
     // Read the value at the given address
@@ -169,6 +179,13 @@ impl Cpu {
 
         while self.state == State::Running {
             self.step();
+            // Check if there is a breakpoint
+            if let Some(bp) = self.breakpoint {
+                if bp as usize == self.ip {
+                    println!("reached breakpoints at {bp}");
+                    break;
+                };
+            }
         }
     }
 

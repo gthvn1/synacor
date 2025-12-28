@@ -5,9 +5,7 @@ mod args;
 mod emulator;
 
 fn main() -> io::Result<()> {
-    // TODO: read filename from command line
     let args = args::read_args();
-    dbg!(&args);
 
     let mut f = File::open(&args.filename)?;
     let mut data = vec![];
@@ -18,6 +16,10 @@ fn main() -> io::Result<()> {
         "{} words loaded in memory from {}",
         cpu.footprint, &args.filename
     );
+
+    if let Some(bp) = args.breakpoint {
+        cpu.set_breakpoint(bp);
+    }
 
     // Enter debug mode by default
     // TODO: use a parameter
@@ -32,16 +34,10 @@ fn main() -> io::Result<()> {
             .expect("failed to read input");
         match buf.trim() {
             "b" => println!("Not implemented"),
-            "c" => {
-                cpu.cont();
-                break;
-            }
+            "c" => cpu.cont(),
             "p" => println!("{}", cpu.print()),
             "q" => break,
-            "r" => {
-                cpu.run();
-                break;
-            }
+            "r" => cpu.run(),
             "s" => cpu.step(),
             _ => println!("you print {buf}"),
         }
