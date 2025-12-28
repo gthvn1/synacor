@@ -84,7 +84,7 @@ impl Cpu {
         assert!((layout::MEM_MIN..=layout::REG_MAX).contains(&addr));
         if addr <= layout::MEM_MAX {
             // It is an immediate
-            self.mem[addr]
+            addr as u16
         } else {
             // It is a register
             let reg_id = addr - layout::REG_MIN;
@@ -154,19 +154,24 @@ impl Cpu {
             insn::Insn::Halt => self.halt(),
             insn::Insn::In(a) => todo!("Execute in"),
             insn::Insn::Jmp(a) => {
+                // Not sure that address to jmp can be register
                 let value = self.read(a);
                 self.set_ip(value)
             }
             insn::Insn::Jt(a, b) => {
-                let value = self.read(a);
-                if value != 0 {
-                    self.set_ip(b)
+                let cond = self.read(a);
+                if cond != 0 {
+                    // Not sure that address to jmp can be register
+                    let addr = self.read(b);
+                    self.set_ip(addr)
                 }
             }
             insn::Insn::Jf(a, b) => {
-                let value = self.read(a);
-                if value == 0 {
-                    self.set_ip(b)
+                let cond = self.read(a);
+                if cond == 0 {
+                    // Not sure that address to jmp can be register
+                    let addr = self.read(b);
+                    self.set_ip(addr)
                 }
             }
             insn::Insn::Mod(a, b, c) => todo!("Execute mod "),

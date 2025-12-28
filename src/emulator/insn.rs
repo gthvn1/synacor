@@ -1,7 +1,7 @@
 use crate::emulator::Cpu;
 use std::fmt;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 struct OpCode {
     name: &'static str,
     arity: usize, // number of parameters
@@ -76,6 +76,7 @@ pub fn gen_insn(opcode: usize, cpu: &mut Cpu) -> Option<Insn> {
     }
 }
 
+#[derive(Debug)]
 pub enum Insn {
     Add(u16, u16, u16),
     And(u16, u16, u16),
@@ -132,5 +133,7 @@ impl fmt::Display for Insn {
 
 pub fn get(cpu: &mut Cpu) -> Option<Insn> {
     let opcode = cpu.fetch();
-    gen_insn(opcode as usize, cpu)
+    let insn = gen_insn(opcode as usize, cpu);
+    // dbg!(&insn);
+    insn
 }
