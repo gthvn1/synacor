@@ -137,14 +137,19 @@ impl Cpu {
         out
     }
 
+    pub fn halt(&mut self) {
+        self.state = State::Stopped;
+    }
+
     pub fn step(&mut self) {
-        match insn::get(self) {
+        let Some(insn) = insn::get(self) else { return };
+        match insn {
             insn::Insn::Add(a, b, c) => todo!("Execute add"),
             insn::Insn::And(a, b, c) => todo!("Execute and"),
             insn::Insn::Call(a) => todo!("Execute call"),
             insn::Insn::Eq(a, b, c) => todo!("Execute eq"),
             insn::Insn::Gt(a, b, c) => todo!("Execute gt"),
-            insn::Insn::Halt => self.state = State::Stopped,
+            insn::Insn::Halt => self.halt(),
             insn::Insn::In(a) => todo!("Execute in"),
             insn::Insn::Jmp(a) => {
                 let value = self.read(a);
@@ -196,8 +201,11 @@ impl Cpu {
         self.reset();
         let upper = self.footprint as usize;
         (layout::MEM_MIN..=upper).for_each(|i| {
-            let insn = insn::get(self);
-            println!("Mem[{:05} (0x{:05x})] -> {}", i, i, insn);
+            if let Some(insn) = insn::get(self) {
+                println!("Mem[{:05} (0x{:05x})] -> {}", i, i, insn);
+            } else {
+                println!("Mem[{:05} (0x{:05x})] -> <skipped>", i, i);
+            }
         })
     }
 

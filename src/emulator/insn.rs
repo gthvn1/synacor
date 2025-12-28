@@ -33,32 +33,42 @@ const OPCODES: &[OpCode] = &[
     OpCode {name: "Noop", arity: 0}, // 21
 ];
 
-pub fn gen_insn(opcode: usize, cpu: &mut Cpu) -> Insn {
+pub fn gen_insn(opcode: usize, cpu: &mut Cpu) -> Option<Insn> {
+    if opcode >= OPCODES.len() {
+        println!("Unknown opcode {opcode}. CPU halted");
+        cpu.halt();
+        return None;
+    }
+
     let op = OPCODES[opcode];
     let args: Vec<u16> = (0..op.arity).map(|_| cpu.fetch()).collect();
     match op.name {
-        "Halt" => Insn::Halt,
-        "Set" => Insn::Set(args[0], args[1]),
-        "Push" => Insn::Push(args[0]),
-        "Pop" => Insn::Pop(args[0]),
-        "Eq" => Insn::Eq(args[0], args[1], args[2]),
-        "Gt" => Insn::Gt(args[0], args[1], args[2]),
-        "Jmp" => Insn::Jmp(args[0]),
-        "Jt" => Insn::Jt(args[0], args[1]),
-        "Jf" => Insn::Jf(args[0], args[1]),
-        "Add" => Insn::Add(args[0], args[1], args[2]),
-        "Mult" => Insn::Mult(args[0], args[1], args[2]),
-        "Mod" => Insn::Mod(args[0], args[1], args[2]),
-        "And" => Insn::And(args[0], args[1], args[2]),
-        "Or" => Insn::Or(args[0], args[1], args[2]),
-        "Not" => Insn::Not(args[0], args[1]),
-        "Rmem" => Insn::Rmem(args[0], args[1]),
-        "Wmem" => Insn::Wmem(args[0], args[1]),
-        "Call" => Insn::Call(args[0]),
-        "Ret" => Insn::Ret,
-        "Out" => Insn::Out(std::char::from_u32(args[0] as u32).expect("failed to convert char")),
-        "In" => Insn::In(std::char::from_u32(args[0] as u32).expect("failed to convert char")),
-        "Noop" => Insn::Noop,
+        "Halt" => Some(Insn::Halt),
+        "Set" => Some(Insn::Set(args[0], args[1])),
+        "Push" => Some(Insn::Push(args[0])),
+        "Pop" => Some(Insn::Pop(args[0])),
+        "Eq" => Some(Insn::Eq(args[0], args[1], args[2])),
+        "Gt" => Some(Insn::Gt(args[0], args[1], args[2])),
+        "Jmp" => Some(Insn::Jmp(args[0])),
+        "Jt" => Some(Insn::Jt(args[0], args[1])),
+        "Jf" => Some(Insn::Jf(args[0], args[1])),
+        "Add" => Some(Insn::Add(args[0], args[1], args[2])),
+        "Mult" => Some(Insn::Mult(args[0], args[1], args[2])),
+        "Mod" => Some(Insn::Mod(args[0], args[1], args[2])),
+        "And" => Some(Insn::And(args[0], args[1], args[2])),
+        "Or" => Some(Insn::Or(args[0], args[1], args[2])),
+        "Not" => Some(Insn::Not(args[0], args[1])),
+        "Rmem" => Some(Insn::Rmem(args[0], args[1])),
+        "Wmem" => Some(Insn::Wmem(args[0], args[1])),
+        "Call" => Some(Insn::Call(args[0])),
+        "Ret" => Some(Insn::Ret),
+        "Out" => Some(Insn::Out(
+            std::char::from_u32(args[0] as u32).expect("failed to convert char"),
+        )),
+        "In" => Some(Insn::In(
+            std::char::from_u32(args[0] as u32).expect("failed to convert char"),
+        )),
+        "Noop" => Some(Insn::Noop),
         _ => panic!("unreachable"),
     }
 }
@@ -117,7 +127,7 @@ impl fmt::Display for Insn {
     }
 }
 
-pub fn get(cpu: &mut Cpu) -> Insn {
+pub fn get(cpu: &mut Cpu) -> Option<Insn> {
     let opcode = cpu.fetch();
     gen_insn(opcode as usize, cpu)
 }
