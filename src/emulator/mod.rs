@@ -49,7 +49,7 @@ impl Cpu {
         // Programs are loaded into memory starting at address 0
         assert!(roms.len().is_multiple_of(2), "ROMs size is odd");
         let footprint = roms.len() / 2;
-        assert!(footprint <= layout::MEM_SIZE);
+        assert!(footprint <= layout::MEM_MAX);
 
         let mut cpu = Cpu {
             mem: [0; layout::MEM_SIZE],
@@ -98,7 +98,9 @@ impl Cpu {
     }
 
     fn fetch(&mut self) -> u16 {
-        assert!(self.ip <= layout::MEM_MAX);
+        if self.ip > layout::MEM_MAX {
+            panic!("IP {} is above max mem {}", self.ip, layout::MEM_MAX);
+        }
         let word = self.mem[self.ip];
         self.ip += 1;
         word
@@ -200,13 +202,15 @@ impl Cpu {
     pub fn disassemble(&mut self) {
         self.reset();
         let upper = self.footprint as usize;
-        (layout::MEM_MIN..=upper).for_each(|i| {
+
+        println!("Disassemble from {} to {}", layout::MEM_MIN, upper);
+        while self.ip <= upper {
             if let Some(insn) = insn::get(self) {
-                println!("Mem[{:05} (0x{:05x})] -> {}", i, i, insn);
+                println!("Mem[{:05} (0x{:05x})] -> {}", self.ip, self.ip, insn);
             } else {
-                println!("Mem[{:05} (0x{:05x})] -> <skipped>", i, i);
+                println!("Mem[{:05} (0x{:05x})] -> <skipped>", self.ip, self.ip);
             }
-        })
+        }
     }
 
     pub fn run(&mut self) {
