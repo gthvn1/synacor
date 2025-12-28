@@ -44,8 +44,8 @@ pub fn read_args() -> Args {
 
     if let Some(fname) = filename {
         Args {
-            breakpoint: breakpoint,
-            disassemble: disassemble,
+            breakpoint,
+            disassemble,
             filename: fname,
         }
     } else {

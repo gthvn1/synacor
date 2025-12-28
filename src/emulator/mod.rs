@@ -1,6 +1,5 @@
 mod insn;
 
-#[allow(unused)]
 mod layout {
     /// Total number of addressable memory words.
     /// Memory addresses range from 0 to MEM_SIZE - 1.
@@ -181,11 +180,11 @@ impl Cpu {
         while self.state == State::Running {
             self.step();
             // Check if there is a breakpoint
-            if let Some(bp) = self.breakpoint {
-                if bp as usize == self.ip {
-                    println!("reached breakpoints at {bp}");
-                    break;
-                };
+            if let Some(bp) = self.breakpoint
+                && bp as usize == self.ip
+            {
+                println!("reached breakpoints at {bp}");
+                break;
             }
         }
     }
