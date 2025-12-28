@@ -73,6 +73,7 @@ impl Cpu {
     pub fn set_breakpoint(&mut self, addr: u16) {
         if (layout::MEM_MIN..=layout::MEM_MAX).contains(&(addr as usize)) {
             self.breakpoint = Some(addr);
+            println!("Breakpoint set at {:05} (0x{:05x})", addr, addr);
         } else {
             println!("Failed to set addr, {addr} is not in memory");
         }

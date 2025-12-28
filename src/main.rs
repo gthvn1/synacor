@@ -28,18 +28,34 @@ fn main() -> io::Result<()> {
         print!("debug> ");
         io::stdout().flush().unwrap();
 
-        let mut buf = String::new();
+        let mut input = String::new();
+
         io::stdin()
-            .read_line(&mut buf)
+            .read_line(&mut input)
             .expect("failed to read input");
-        match buf.trim() {
-            "b" => println!("Not implemented"),
-            "c" => cpu.cont(),
-            "p" => println!("{}", cpu.print()),
-            "q" => break,
-            "r" => cpu.run(),
-            "s" => cpu.step(),
-            _ => println!("you print {buf}"),
+
+        let input = input.trim();
+        let mut parts = input.split_whitespace();
+
+        match parts.next() {
+            Some("b") | Some("break") => {
+                if let Some(arg) = parts.next() {
+                    match arg.parse::<u16>() {
+                        Ok(n) => cpu.set_breakpoint(n),
+                        Err(_) => {
+                            println!("Invalid breakpoint, a valid memory integer is expected")
+                        }
+                    }
+                } else {
+                    println!("Missing breakpoint integer")
+                }
+            }
+            Some("c") | Some("continue") => cpu.cont(),
+            Some("p") | Some("print") => println!("{}", cpu.print()),
+            Some("r") | Some("run") => cpu.run(),
+            Some("q") | Some("quit") => break,
+            Some("s") | Some("step") => cpu.step(),
+            _ => println!("Unknown input"),
         }
     }
 
