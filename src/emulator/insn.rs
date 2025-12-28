@@ -1,118 +1,65 @@
 use crate::emulator::Cpu;
 use std::fmt;
 
-enum InsnName {
-    Add,
-    And,
-    Call,
-    Eq,
-    Gt,
-    Halt,
-    In,
-    Jf,
-    Jmp,
-    Jt,
-    Mod,
-    Mult,
-    Noop,
-    Not,
-    Or,
-    Out,
-    Pop,
-    Push,
-    Ret,
-    Rmem,
-    Set,
-    Wmem,
+#[derive(Clone, Copy)]
+struct OpCode {
+    name: &'static str,
+    arity: usize,
 }
 
-impl InsnName {
-    fn of_int(id: u16) -> Self {
-        match id {
-            0 => InsnName::Halt,
-            1 => InsnName::Set,
-            2 => InsnName::Push,
-            3 => InsnName::Pop,
-            4 => InsnName::Eq,
-            5 => InsnName::Gt,
-            6 => InsnName::Jmp,
-            7 => InsnName::Jt,
-            8 => InsnName::Jf,
-            9 => InsnName::Add,
-            10 => InsnName::Mult,
-            11 => InsnName::Mod,
-            12 => InsnName::And,
-            13 => InsnName::Or,
-            14 => InsnName::Not,
-            15 => InsnName::Rmem,
-            16 => InsnName::Wmem,
-            17 => InsnName::Call,
-            18 => InsnName::Ret,
-            19 => InsnName::Out,
-            20 => InsnName::In,
-            21 => InsnName::Noop,
-            _ => panic!("Unknown opcode: {id}"),
-        }
-    }
+#[rustfmt::skip]
+const OPCODES: &[OpCode] = &[
+    OpCode {name: "Halt", arity: 0}, // 0
+    OpCode {name: "Set" , arity: 2},
+    OpCode {name: "Push", arity: 1},
+    OpCode {name: "Pop" , arity: 1},
+    OpCode {name: "Eq"  , arity: 3},
+    OpCode {name: "Gt"  , arity: 3}, // 5
+    OpCode {name: "Jmp" , arity: 1},
+    OpCode {name: "Jt"  , arity: 2},
+    OpCode {name: "Jf"  , arity: 2},
+    OpCode {name: "Add" , arity: 3},
+    OpCode {name: "Mult", arity: 3}, // 10
+    OpCode {name: "Mod" , arity: 3},
+    OpCode {name: "And" , arity: 3},
+    OpCode {name: "Or"  , arity: 3},
+    OpCode {name: "Not" , arity: 2},
+    OpCode {name: "Rmem", arity: 2}, // 15
+    OpCode {name: "Wmem", arity: 2},
+    OpCode {name: "Call", arity: 1},
+    OpCode {name: "Ret" , arity: 0},
+    OpCode {name: "Out" , arity: 1},
+    OpCode {name: "In"  , arity: 1}, // 20
+    OpCode {name: "Noop", arity: 0}, // 21
+];
 
-    fn arity(&self) -> usize {
-        match self {
-            InsnName::Halt => 0,
-            InsnName::Set => 2,
-            InsnName::Push => 1,
-            InsnName::Pop => 1,
-            InsnName::Eq => 3,
-            InsnName::Gt => 3,
-            InsnName::Jmp => 1,
-            InsnName::Jt => 2,
-            InsnName::Jf => 2,
-            InsnName::Add => 3,
-            InsnName::Mult => 3,
-            InsnName::Mod => 3,
-            InsnName::And => 3,
-            InsnName::Or => 3,
-            InsnName::Not => 2,
-            InsnName::Rmem => 2,
-            InsnName::Wmem => 2,
-            InsnName::Call => 1,
-            InsnName::Ret => 0,
-            InsnName::Out => 1,
-            InsnName::In => 1,
-            InsnName::Noop => 0,
-        }
-    }
-
-    pub fn gen_insn(&self, cpu: &mut Cpu) -> Insn {
-        let arity = self.arity();
-        let args: Vec<u16> = (0..arity).map(|_| cpu.fetch()).collect();
-        match self {
-            InsnName::Halt => Insn::Halt,
-            InsnName::Set => Insn::Set(args[0], args[1]),
-            InsnName::Push => Insn::Push(args[0]),
-            InsnName::Pop => Insn::Pop(args[0]),
-            InsnName::Eq => Insn::Eq(args[0], args[1], args[2]),
-            InsnName::Gt => Insn::Gt(args[0], args[1], args[2]),
-            InsnName::Jmp => Insn::Jmp(args[0]),
-            InsnName::Jt => Insn::Jt(args[0], args[1]),
-            InsnName::Jf => Insn::Jf(args[0], args[1]),
-            InsnName::Add => Insn::Add(args[0], args[1], args[2]),
-            InsnName::Mult => Insn::Mult(args[0], args[1], args[2]),
-            InsnName::Mod => Insn::Mod(args[0], args[1], args[2]),
-            InsnName::And => Insn::And(args[0], args[1], args[2]),
-            InsnName::Or => Insn::Or(args[0], args[1], args[2]),
-            InsnName::Not => Insn::Not(args[0], args[1]),
-            InsnName::Rmem => Insn::Rmem(args[0], args[1]),
-            InsnName::Wmem => Insn::Wmem(args[0], args[1]),
-            InsnName::Call => Insn::Call(args[0]),
-            InsnName::Ret => Insn::Ret,
-            InsnName::Out => {
-                Insn::Out(std::char::from_u32(args[0] as u32).expect("failed to convert char"))
-            }
-            InsnName::In => {
-                Insn::In(std::char::from_u32(args[0] as u32).expect("failed to convert char"))
-            }
-            InsnName::Noop => Insn::Noop,
-        }
+pub fn gen_insn(opcode: usize, cpu: &mut Cpu) -> Insn {
+    let op = OPCODES[opcode];
+    let args: Vec<u16> = (0..op.arity).map(|_| cpu.fetch()).collect();
+    match op.name {
+        "Halt" => Insn::Halt,
+        "Set" => Insn::Set(args[0], args[1]),
+        "Push" => Insn::Push(args[0]),
+        "Pop" => Insn::Pop(args[0]),
+        "Eq" => Insn::Eq(args[0], args[1], args[2]),
+        "Gt" => Insn::Gt(args[0], args[1], args[2]),
+        "Jmp" => Insn::Jmp(args[0]),
+        "Jt" => Insn::Jt(args[0], args[1]),
+        "Jf" => Insn::Jf(args[0], args[1]),
+        "Add" => Insn::Add(args[0], args[1], args[2]),
+        "Mult" => Insn::Mult(args[0], args[1], args[2]),
+        "Mod" => Insn::Mod(args[0], args[1], args[2]),
+        "And" => Insn::And(args[0], args[1], args[2]),
+        "Or" => Insn::Or(args[0], args[1], args[2]),
+        "Not" => Insn::Not(args[0], args[1]),
+        "Rmem" => Insn::Rmem(args[0], args[1]),
+        "Wmem" => Insn::Wmem(args[0], args[1]),
+        "Call" => Insn::Call(args[0]),
+        "Ret" => Insn::Ret,
+        "Out" => Insn::Out(std::char::from_u32(args[0] as u32).expect("failed to convert char")),
+        "In" => Insn::In(std::char::from_u32(args[0] as u32).expect("failed to convert char")),
+        "Noop" => Insn::Noop,
+        _ => panic!("unreachable"),
     }
 }
 
@@ -172,5 +119,5 @@ impl fmt::Display for Insn {
 
 pub fn get(cpu: &mut Cpu) -> Insn {
     let opcode = cpu.fetch();
-    InsnName::of_int(opcode).gen_insn(cpu)
+    gen_insn(opcode as usize, cpu)
 }
