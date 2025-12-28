@@ -22,11 +22,18 @@ mod layout {
     pub const REG_MAX: usize = REG_MIN + NUM_REGS - 1;
 }
 
+#[derive(PartialEq, Eq)]
+enum State {
+    Running,
+    Stopped,
+}
+
 pub struct Cpu {
     pub mem: [u16; layout::MEM_SIZE], // The size will depend of the ROMs
     pub regs: [u16; layout::NUM_REGS],
     pub ip: usize,      // Instruction pointer
     pub footprint: u16, // keep the program's memory footprint
+    state: State,
 }
 
 #[allow(unused)]
@@ -49,6 +56,7 @@ impl Cpu {
             regs: [0; layout::NUM_REGS],
             ip: 0,
             footprint: footprint as u16,
+            state: State::Stopped,
         };
 
         for (idx, chunk) in roms.chunks_exact(2).enumerate() {
@@ -119,44 +127,53 @@ impl Cpu {
         out
     }
 
-    #[allow(unused)]
+    pub fn step(&mut self) {
+        match insn::get(self) {
+            insn::Insn::Add(a, b, c) => todo!("Execute add"),
+            insn::Insn::And(a, b, c) => todo!("Execute and"),
+            insn::Insn::Call(a) => todo!("Execute call"),
+            insn::Insn::Eq(a, b, c) => todo!("Execute eq"),
+            insn::Insn::Gt(a, b, c) => todo!("Execute gt"),
+            insn::Insn::Halt => self.state = State::Stopped,
+            insn::Insn::In(a) => todo!("Execute in"),
+            insn::Insn::Jmp(a) => self.set_ip(a),
+            insn::Insn::Jt(a, b) => {
+                let value = self.read(a);
+                if value != 0 {
+                    self.set_ip(b)
+                }
+            }
+            insn::Insn::Jf(a, b) => {
+                let value = self.read(a);
+                if value == 0 {
+                    self.set_ip(b)
+                }
+            }
+            insn::Insn::Mod(a, b, c) => todo!("Execute mod "),
+            insn::Insn::Mult(a, b, c) => todo!("Execute mult "),
+            insn::Insn::Noop => {}
+            insn::Insn::Not(a, b) => todo!("Execute not"),
+            insn::Insn::Or(a, b, c) => todo!("Execute or"),
+            insn::Insn::Out(a) => print!("{a}"),
+            insn::Insn::Pop(a) => todo!("Execute pop"),
+            insn::Insn::Push(a) => todo!("Execute push"),
+            insn::Insn::Ret => todo!("Execute ret"),
+            insn::Insn::Rmem(a, b) => todo!("Execute rmem"),
+            insn::Insn::Wmem(a, b) => todo!("Execute wmem"),
+            insn::Insn::Set(a, b) => todo!("Execute set"),
+        }
+    }
+
+    pub fn cont(&mut self) {
+        self.state = State::Running;
+
+        while self.state == State::Running {
+            self.step();
+        }
+    }
+
     pub fn run(&mut self) {
         self.reset();
-        loop {
-            match insn::get(self) {
-                insn::Insn::Add(a, b, c) => todo!("Execute add"),
-                insn::Insn::And(a, b, c) => todo!("Execute and"),
-                insn::Insn::Call(a) => todo!("Execute call"),
-                insn::Insn::Eq(a, b, c) => todo!("Execute eq"),
-                insn::Insn::Gt(a, b, c) => todo!("Execute gt"),
-                insn::Insn::Halt => break,
-                insn::Insn::In(a) => todo!("Execute in"),
-                insn::Insn::Jmp(a) => self.set_ip(a),
-                insn::Insn::Jt(a, b) => {
-                    let value = self.read(a);
-                    if value != 0 {
-                        self.set_ip(b)
-                    }
-                }
-                insn::Insn::Jf(a, b) => {
-                    let value = self.read(a);
-                    if value == 0 {
-                        self.set_ip(b)
-                    }
-                }
-                insn::Insn::Mod(a, b, c) => todo!("Execute mod "),
-                insn::Insn::Mult(a, b, c) => todo!("Execute mult "),
-                insn::Insn::Noop => {}
-                insn::Insn::Not(a, b) => todo!("Execute not"),
-                insn::Insn::Or(a, b, c) => todo!("Execute or"),
-                insn::Insn::Out(a) => print!("{a}"),
-                insn::Insn::Pop(a) => todo!("Execute pop"),
-                insn::Insn::Push(a) => todo!("Execute push"),
-                insn::Insn::Ret => todo!("Execute ret"),
-                insn::Insn::Rmem(a, b) => todo!("Execute rmem"),
-                insn::Insn::Wmem(a, b) => todo!("Execute wmem"),
-                insn::Insn::Set(a, b) => todo!("Execute set"),
-            }
-        }
+        self.cont();
     }
 }

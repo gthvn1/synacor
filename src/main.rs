@@ -26,14 +26,17 @@ fn main() -> io::Result<()> {
             .expect("failed to read input");
         match buf.trim() {
             "b" => println!("Not implemented"),
-            "c" => println!("Not implemented"),
+            "c" => {
+                cpu.cont();
+                break;
+            }
             "p" => println!("{}", cpu.print()),
             "q" => break,
             "r" => {
                 cpu.run();
                 break;
             }
-            "s" => println!("Not implemented"),
+            "s" => cpu.step(),
             _ => println!("you print {buf}"),
         }
     }
