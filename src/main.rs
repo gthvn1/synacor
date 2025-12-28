@@ -1,17 +1,23 @@
 use std::fs::File;
 use std::io::{self, Read, Write};
 
+mod args;
 mod emulator;
 
 fn main() -> io::Result<()> {
     // TODO: read filename from command line
-    let filename = "roms/challenge.bin";
-    let mut f = File::open(filename)?;
+    let args = args::read_args();
+    dbg!(&args);
+
+    let mut f = File::open(&args.filename)?;
     let mut data = vec![];
     f.read_to_end(&mut data)?;
 
     let mut cpu = emulator::Cpu::load(data);
-    println!("{} words loaded in memory from {}", cpu.footprint, filename);
+    println!(
+        "{} words loaded in memory from {}",
+        cpu.footprint, &args.filename
+    );
 
     // Enter debug mode by default
     // TODO: use a parameter
