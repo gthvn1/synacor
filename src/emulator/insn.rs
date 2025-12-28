@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Clone, Copy)]
 struct OpCode {
     name: &'static str,
-    arity: usize,
+    arity: usize, // number of parameters
 }
 
 #[rustfmt::skip]

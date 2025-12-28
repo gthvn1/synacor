@@ -63,7 +63,7 @@ impl Cpu {
     // Read the value at the given address
     fn read(&self, addr: u16) -> u16 {
         let addr = addr as usize;
-        assert!(layout::MEM_MIN <= addr && addr <= layout::REG_MAX);
+        assert!((layout::MEM_MIN..=layout::REG_MAX).contains(&addr));
         if addr <= layout::MEM_MAX {
             // It is an immediate
             self.mem[addr]
