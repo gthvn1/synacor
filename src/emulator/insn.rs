@@ -35,7 +35,10 @@ const OPCODES: &[OpCode] = &[
 
 pub fn gen_insn(opcode: usize, cpu: &mut Cpu) -> Option<Insn> {
     if opcode >= OPCODES.len() {
-        println!("Unknown opcode {opcode}. CPU halted");
+        println!(
+            "Unknown opcode {opcode} at {:05} (0x{:05x}). CPU halted",
+            cpu.ip, cpu.ip
+        );
         cpu.halt();
         return None;
     }
