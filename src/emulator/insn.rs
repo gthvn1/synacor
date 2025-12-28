@@ -133,7 +133,5 @@ impl fmt::Display for Insn {
 
 pub fn get(cpu: &mut Cpu) -> Option<Insn> {
     let opcode = cpu.fetch();
-    let insn = gen_insn(opcode as usize, cpu);
-    // dbg!(&insn);
-    insn
+    gen_insn(opcode as usize, cpu)
 }

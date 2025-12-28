@@ -19,6 +19,14 @@ mod layout {
 
     /// Highest address mapped to a register.
     pub const REG_MAX: usize = REG_MIN + NUM_REGS - 1;
+
+    pub fn is_mem(addr: u16) -> bool {
+        (MEM_MIN..=MEM_MAX).contains(&(addr as usize))
+    }
+
+    pub fn is_reg(addr: u16) -> bool {
+        (REG_MIN..=REG_MAX).contains(&(addr as usize))
+    }
 }
 
 #[derive(PartialEq, Eq)]
@@ -70,7 +78,7 @@ impl Cpu {
     }
 
     pub fn set_breakpoint(&mut self, addr: u16) {
-        if (layout::MEM_MIN..=layout::MEM_MAX).contains(&(addr as usize)) {
+        if layout::is_mem(addr) {
             self.breakpoint = Some(addr);
             println!("Breakpoint set at {:05} (0x{:05x})", addr, addr);
         } else {
@@ -82,28 +90,26 @@ impl Cpu {
     // and if it is in the register range it is the content of the register that
     // is returned
     fn resolve_addr(&self, addr: u16) -> u16 {
-        let addr = addr as usize;
-        assert!((layout::MEM_MIN..=layout::REG_MAX).contains(&addr));
-        if addr <= layout::MEM_MAX {
-            // It is an immediate
-            addr as u16
-        } else {
-            // It is a register
-            let reg_id = addr - layout::REG_MIN;
+        if layout::is_mem(addr) {
+            addr
+        } else if layout::is_reg(addr) {
+            let reg_id = addr as usize - layout::REG_MIN;
             self.regs[reg_id]
+        } else {
+            panic!("{addr} is not valid memory");
         }
     }
 
     // Read the value at the given address. If it is in memory range it returns the content
     // at this address, otherwise it returns the content of the register.
     fn read(&self, addr: u16) -> u16 {
-        let addr = addr as usize;
-        assert!((layout::MEM_MIN..=layout::REG_MAX).contains(&addr));
-        if addr <= layout::MEM_MAX {
-            self.mem[addr]
-        } else {
-            let reg_id = addr - layout::REG_MIN;
+        if layout::is_mem(addr) {
+            self.mem[addr as usize]
+        } else if layout::is_reg(addr) {
+            let reg_id = addr as usize - layout::REG_MIN;
             self.regs[reg_id]
+        } else {
+            panic!("{addr} is not valid memory");
         }
     }
 
