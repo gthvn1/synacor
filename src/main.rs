@@ -4,25 +4,20 @@ use std::io::{self, Read, Write};
 mod emulator;
 
 fn main() -> io::Result<()> {
-    let mut f = File::open("roms/challenge.bin")?;
+    // TODO: read filename from command line
+    let filename = "roms/challenge.bin";
+    let mut f = File::open(filename)?;
     let mut data = vec![];
     f.read_to_end(&mut data)?;
 
-    // Print 16 first bytes of data
-    for byte in data.iter().take(16) {
-        print!("{:02X}  ", byte);
-    }
-    println!();
-
     let mut cpu = emulator::Cpu::load(data);
-    // Print 8 first bytes of memory
-    for (idx, byte) in cpu.mem.iter().take(8).enumerate() {
-        println!("{:04X}: {:02X}  ", idx, byte);
-    }
+    println!("{} words loaded in memory from {}", cpu.footprint, filename);
 
-    // Enter debug mode:
+    // Enter debug mode by default
+    // TODO: use a parameter
+    println!("[b]reak, [c]ontinue, [p]rint, [q]uit, [r]un, [s]tep");
     loop {
-        print!("> ");
+        print!("debug> ");
         io::stdout().flush().unwrap();
 
         let mut buf = String::new();
@@ -30,13 +25,18 @@ fn main() -> io::Result<()> {
             .read_line(&mut buf)
             .expect("failed to read input");
         match buf.trim() {
+            "b" => println!("Not implemented"),
+            "c" => println!("Not implemented"),
+            "p" => println!("Not implemented"),
             "q" => break,
+            "r" => {
+                cpu.run();
+                break;
+            }
+            "s" => println!("Not implemented"),
             _ => println!("you print {buf}"),
         }
     }
-    println!("{} words loaded in memory", cpu.footprint);
 
-    //cpu.disassemble();
-    cpu.run();
     Ok(())
 }
