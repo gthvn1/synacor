@@ -60,6 +60,20 @@ impl Cpu {
         cpu
     }
 
+    // Read the value at the given address
+    fn read(&self, addr: u16) -> u16 {
+        let addr = addr as usize;
+        assert!(layout::MEM_MIN <= addr && addr <= layout::REG_MAX);
+        if addr <= layout::MEM_MAX {
+            // It is an immediate
+            self.mem[addr]
+        } else {
+            // It is a register
+            let reg_id = addr - layout::REG_MIN;
+            self.regs[reg_id]
+        }
+    }
+
     fn reset(&mut self) {
         self.regs.fill(0);
         self.ip = 0;
@@ -94,7 +108,6 @@ impl Cpu {
     pub fn run(&mut self) {
         self.reset();
         loop {
-            println!("At ip {:04X}", self.ip);
             match insn::get(self) {
                 insn::Insn::Add(a, b, c) => todo!("Execute add"),
                 insn::Insn::And(a, b, c) => todo!("Execute and"),
@@ -105,12 +118,14 @@ impl Cpu {
                 insn::Insn::In(a) => todo!("Execute in"),
                 insn::Insn::Jmp(a) => self.set_ip(a),
                 insn::Insn::Jt(a, b) => {
-                    if a != 0 {
+                    let value = self.read(a);
+                    if value != 0 {
                         self.set_ip(b)
                     }
                 }
                 insn::Insn::Jf(a, b) => {
-                    if a == 0 {
+                    let value = self.read(a);
+                    if value == 0 {
                         self.set_ip(b)
                     }
                 }
