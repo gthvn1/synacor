@@ -146,7 +146,10 @@ impl Cpu {
             insn::Insn::Gt(a, b, c) => todo!("Execute gt"),
             insn::Insn::Halt => self.state = State::Stopped,
             insn::Insn::In(a) => todo!("Execute in"),
-            insn::Insn::Jmp(a) => self.set_ip(a),
+            insn::Insn::Jmp(a) => {
+                let value = self.read(a);
+                self.set_ip(value)
+            }
             insn::Insn::Jt(a, b) => {
                 let value = self.read(a);
                 if value != 0 {
