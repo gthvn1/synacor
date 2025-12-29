@@ -184,19 +184,20 @@ impl Cpu {
             insn::Insn::Add(a, b, c) => {
                 // We are expecting a to be a register, it will be checked
                 // when writting
-                let valb = self.resolve_addr(b);
-                let valc = self.resolve_addr(c);
-                self.write(
-                    a,
-                    (valb + valc) % (u16::try_from(layout::MEM_SIZE).unwrap()),
-                );
+                let valb = self.resolve_addr(b) as usize;
+                let valc = self.resolve_addr(c) as usize;
+                self.write(a, u16::try_from((valb + valc) % layout::MEM_SIZE).unwrap());
             }
             insn::Insn::And(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
                 self.write(a, valb & valc);
             }
-            insn::Insn::Call(a) => self.halt("instruction not implemented: call"),
+            insn::Insn::Call(a) => {
+                self.stack.push(u16::try_from(self.ip).unwrap());
+                let addr = self.resolve_addr(a);
+                self.set_ip(addr)
+            }
             insn::Insn::Eq(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
@@ -238,8 +239,16 @@ impl Cpu {
                     self.set_ip(addr)
                 }
             }
-            insn::Insn::Mod(a, b, c) => self.halt("instruction not implemented: mod "),
-            insn::Insn::Mult(a, b, c) => self.halt("instruction not implemented: mult "),
+            insn::Insn::Mod(a, b, c) => {
+                let valb = self.resolve_addr(b);
+                let valc = self.resolve_addr(c);
+                self.write(a, valb % valc);
+            }
+            insn::Insn::Mult(a, b, c) => {
+                let valb = self.resolve_addr(b) as usize;
+                let valc = self.resolve_addr(c) as usize;
+                self.write(a, u16::try_from((valb * valc) % layout::MEM_SIZE).unwrap());
+            }
             insn::Insn::Noop => {}
             insn::Insn::Not(a, b) => {
                 let value = self.resolve_addr(b);
@@ -262,7 +271,13 @@ impl Cpu {
                 let val = self.resolve_addr(a);
                 self.stack.push(val);
             }
-            insn::Insn::Ret => self.halt("instruction not implemented: ret"),
+            insn::Insn::Ret => {
+                if let Some(addr) = self.stack.pop() {
+                    self.set_ip(addr);
+                } else {
+                    self.halt("cannot pop empty stack");
+                }
+            }
             insn::Insn::Rmem(a, b) => self.halt("instruction not implemented: rmem"),
             insn::Insn::Wmem(a, b) => self.halt("instruction not implemented: wmem"),
             insn::Insn::Set(a, b) => self.write(a, b),
