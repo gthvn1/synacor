@@ -285,7 +285,7 @@ impl Cpu {
                 vprint!(verbose, "Mult: {a} = {res}");
                 self.write(a, res);
             }
-            insn::Insn::Noop => {}
+            insn::Insn::Noop => vprint!(verbose, "Noop"),
             insn::Insn::Not(a, b) => {
                 let value = self.resolve_addr(b);
                 let res = !value & 0x7FFF;
