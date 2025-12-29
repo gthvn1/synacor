@@ -38,6 +38,7 @@ enum State {
 pub struct Cpu {
     pub mem: [u16; layout::MEM_SIZE], // The size will depend of the ROMs
     pub regs: [u16; layout::NUM_REGS],
+    pub stack: Vec<u16>,
     pub ip: usize,      // Instruction pointer
     pub footprint: u16, // keep the program's memory footprint
     state: State,
@@ -62,6 +63,7 @@ impl Cpu {
         let mut cpu = Cpu {
             mem: [0; layout::MEM_SIZE],
             regs: [0; layout::NUM_REGS],
+            stack: vec![],
             ip: 0,
             footprint: footprint as u16,
             state: State::Stopped,
@@ -235,8 +237,17 @@ impl Cpu {
             insn::Insn::Not(a, b) => self.halt("instruction not implemented: not"),
             insn::Insn::Or(a, b, c) => self.halt("instruction not implemented: or"),
             insn::Insn::Out(a) => print!("{a}"),
-            insn::Insn::Pop(a) => self.halt("instruction not implemented: pop"),
-            insn::Insn::Push(a) => self.halt("instruction not implemented: push"),
+            insn::Insn::Pop(a) => {
+                if let Some(value) = self.stack.pop() {
+                    self.write(a, value);
+                } else {
+                    self.halt("cannot pop empty stack");
+                }
+            }
+            insn::Insn::Push(a) => {
+                let val = self.resolve_addr(a);
+                self.stack.push(val);
+            }
             insn::Insn::Ret => self.halt("instruction not implemented: ret"),
             insn::Insn::Rmem(a, b) => self.halt("instruction not implemented: rmem"),
             insn::Insn::Wmem(a, b) => self.halt("instruction not implemented: wmem"),
