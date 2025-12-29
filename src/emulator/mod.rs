@@ -149,6 +149,7 @@ impl Cpu {
     pub fn print(&self) -> String {
         let mut out = String::new();
 
+        out.push_str("   -- Memory --\n");
         let start = self.ip.saturating_sub(5).max(layout::MEM_MIN);
         let end = self.ip.saturating_add(5).min(layout::MEM_MAX);
 
@@ -169,6 +170,12 @@ impl Cpu {
                 ));
             }
         }
+
+        out.push_str("   -- Registers --\n   ");
+        for (idx, reg) in self.regs.iter().enumerate() {
+            out.push_str(&format!("[{:1}]:0x{:05x} ", idx, reg));
+        }
+        out.push_str("\n");
 
         out
     }
@@ -278,8 +285,18 @@ impl Cpu {
                     self.halt("cannot pop empty stack");
                 }
             }
-            insn::Insn::Rmem(a, b) => self.halt("instruction not implemented: rmem"),
-            insn::Insn::Wmem(a, b) => self.halt("instruction not implemented: wmem"),
+            insn::Insn::Rmem(a, b) => {
+                let value = self.read(b);
+                println!(
+                    "ip {:05} (0x{:05x}): read {value} and try to write it at 0x{:05x}",
+                    self.ip, self.ip, a
+                );
+                self.write(a, value);
+            }
+            insn::Insn::Wmem(a, b) => {
+                let value = self.resolve_addr(b);
+                self.write(a, value);
+            }
             insn::Insn::Set(a, b) => self.write(a, b),
         }
     }
