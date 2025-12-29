@@ -186,9 +186,16 @@ impl Cpu {
                 // when writting
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
-                self.write(a, valb + valc);
+                self.write(
+                    a,
+                    (valb + valc) % (u16::try_from(layout::MEM_SIZE).unwrap()),
+                );
             }
-            insn::Insn::And(a, b, c) => self.halt("instruction not implemented: and"),
+            insn::Insn::And(a, b, c) => {
+                let valb = self.resolve_addr(b);
+                let valc = self.resolve_addr(c);
+                self.write(a, valb & valc);
+            }
             insn::Insn::Call(a) => self.halt("instruction not implemented: call"),
             insn::Insn::Eq(a, b, c) => {
                 let valb = self.resolve_addr(b);
@@ -234,8 +241,15 @@ impl Cpu {
             insn::Insn::Mod(a, b, c) => self.halt("instruction not implemented: mod "),
             insn::Insn::Mult(a, b, c) => self.halt("instruction not implemented: mult "),
             insn::Insn::Noop => {}
-            insn::Insn::Not(a, b) => self.halt("instruction not implemented: not"),
-            insn::Insn::Or(a, b, c) => self.halt("instruction not implemented: or"),
+            insn::Insn::Not(a, b) => {
+                let value = self.resolve_addr(b);
+                self.write(a, !value & 0x7FFF)
+            }
+            insn::Insn::Or(a, b, c) => {
+                let valb = self.resolve_addr(b);
+                let valc = self.resolve_addr(c);
+                self.write(a, valb | valc);
+            }
             insn::Insn::Out(a) => print!("{a}"),
             insn::Insn::Pop(a) => {
                 if let Some(value) = self.stack.pop() {
