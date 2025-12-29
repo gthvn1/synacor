@@ -30,7 +30,7 @@ fn main() -> io::Result<()> {
     // Enter debug mode by default
     // TODO: use a parameter
 
-    println!("[b]reak, [c]ontinue, [p]rint, [q]uit, [r]un, [s]tep");
+    println!("[b]reak, [c]ontinue, [p]rint, [q]uit, read, [r]un, [s]tep");
     loop {
         print!("debug> ");
         io::stdout().flush().unwrap();
@@ -59,6 +59,18 @@ fn main() -> io::Result<()> {
             }
             Some("c") | Some("continue") => cpu.cont(args.verbose),
             Some("p") | Some("print") => println!("{}", cpu.print()),
+            Some("read") => {
+                if let Some(arg) = parts.next() {
+                    match arg.parse::<u16>() {
+                        Ok(n) => println!("[0x{n:04x}] => {}", cpu.read(n)),
+                        Err(_) => {
+                            println!("Invalid memory address")
+                        }
+                    }
+                } else {
+                    println!("address is missing")
+                }
+            }
             Some("r") | Some("run") => cpu.run(args.verbose),
             Some("q") | Some("quit") => break,
             Some("s") | Some("step") => cpu.step(args.verbose),

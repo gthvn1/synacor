@@ -90,7 +90,7 @@ impl Cpu {
     pub fn set_breakpoint(&mut self, addr: u16) {
         if layout::is_mem(addr) {
             self.breakpoint = Some(addr);
-            println!("Breakpoint set at {:05} (0x{:05x})", addr, addr);
+            println!("Breakpoint set at {:05} (0x{:04x})", addr, addr);
         } else {
             println!("Failed to set addr, {addr} is not in memory");
         }
@@ -112,7 +112,7 @@ impl Cpu {
 
     // Read the value at the given address. If it is in memory range it returns the content
     // at this address, otherwise it returns the content of the register.
-    fn read(&self, addr: u16) -> u16 {
+    pub fn read(&self, addr: u16) -> u16 {
         if layout::is_mem(addr) {
             self.mem[addr as usize]
         } else if layout::is_reg(addr) {
@@ -164,14 +164,14 @@ impl Cpu {
         for addr in start..=end {
             if addr == self.ip {
                 out.push_str(&format!(
-                    "=> Mem[{:05} (0x{:05X})]: 0x{:05x}\n",
+                    "=> Mem[{:05} (0x{:04X})]: 0x{:04x}\n",
                     addr,
                     addr,
                     self.read(addr.try_into().unwrap())
                 ));
             } else {
                 out.push_str(&format!(
-                    "   Mem[{:05} (0x{:05X})]: 0x{:05x}\n",
+                    "   Mem[{:05} (0x{:04X})]: 0x{:04x}\n",
                     addr,
                     addr,
                     self.read(addr.try_into().unwrap())
@@ -181,7 +181,7 @@ impl Cpu {
 
         out.push_str("   -- Registers --\n   ");
         for (idx, reg) in self.regs.iter().enumerate() {
-            out.push_str(&format!("[{:1}]:0x{:05x} ", idx, reg));
+            out.push_str(&format!("[{:1}]:0x{:04x} ", idx, reg));
         }
         out.push_str("\n");
 
@@ -235,42 +235,30 @@ impl Cpu {
             insn::Insn::Eq(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Eq: comparing {valb} == {valc}, set 0x{a:04x}",
+                    self.ip,
+                    self.ip
+                );
                 if valb == valc {
-                    vprint!(
-                        verbose,
-                        "IP {:05} (0x{:04x}), Eq: set 0x{a:04x} to 1",
-                        self.ip,
-                        self.ip
-                    );
                     self.write(a, 1);
                 } else {
-                    vprint!(
-                        verbose,
-                        "IP {:05} (0x{:04x}), Eq: set 0x{a:04x} to 0",
-                        self.ip,
-                        self.ip
-                    );
                     self.write(a, 0);
                 }
             }
             insn::Insn::Gt(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Gt: comparing {valb} > {valc}, set 0x{a:04x}",
+                    self.ip,
+                    self.ip
+                );
                 if valb > valc {
-                    vprint!(
-                        verbose,
-                        "IP {:05} (0x{:04x}), Gt: set 0x{a:04x} to 1",
-                        self.ip,
-                        self.ip
-                    );
                     self.write(a, 1);
                 } else {
-                    vprint!(
-                        verbose,
-                        "IP {:05} (0x{:04x}), Gt: set 0x{a:04x} to 0",
-                        self.ip,
-                        self.ip
-                    );
                     self.write(a, 0);
                 }
             }
@@ -418,7 +406,7 @@ impl Cpu {
                 let value = self.read(b);
                 vprint!(
                     verbose,
-                    "IP {:05} (0x{:04x}), Rmem: read {value} and try to write it at 0x{:05x}",
+                    "IP {:05} (0x{:04x}), Rmem: read {value} and try to write it at 0x{:04x}",
                     self.ip,
                     self.ip,
                     a
@@ -429,7 +417,7 @@ impl Cpu {
                 let value = self.resolve_addr(b);
                 vprint!(
                     verbose,
-                    "IP {:05} (0x{:04x}), Wmem: write {value} into memory at 0x{:05x}",
+                    "IP {:05} (0x{:04x}), Wmem: write {value} into memory at 0x{:04x}",
                     self.ip,
                     self.ip,
                     a
@@ -469,7 +457,7 @@ impl Cpu {
 
         println!("Disassemble from {} to {}", layout::MEM_MIN, upper);
         while self.ip <= upper {
-            print!("Mem[{:05} (0x{:05x})]", self.ip, self.ip);
+            print!("Mem[{:05} (0x{:04x})]", self.ip, self.ip);
             if let Some(insn) = insn::get(self) {
                 println!("-> {}", insn);
             } else {
