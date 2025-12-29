@@ -113,6 +113,17 @@ impl Cpu {
         }
     }
 
+    // Read the value at the given address. If it is in memory range it returns the content
+    // at this address, otherwise it returns the content of the register.
+    fn write(&mut self, addr: u16, value: u16) {
+        if layout::is_reg(addr) {
+            let reg_id = addr as usize - layout::REG_MIN;
+            self.regs[reg_id] = value;
+        } else {
+            panic!("{addr} is not a register, only registers are writtable");
+        }
+    }
+
     fn reset(&mut self) {
         self.regs.fill(0);
         self.ip = 0;
@@ -207,7 +218,7 @@ impl Cpu {
             insn::Insn::Ret => self.halt("instruction not implemented: ret"),
             insn::Insn::Rmem(a, b) => self.halt("instruction not implemented: rmem"),
             insn::Insn::Wmem(a, b) => self.halt("instruction not implemented: wmem"),
-            insn::Insn::Set(a, b) => self.halt("instruction not implemented: set"),
+            insn::Insn::Set(a, b) => self.write(a, b),
         }
     }
 
