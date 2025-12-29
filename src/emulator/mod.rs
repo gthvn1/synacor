@@ -188,8 +188,24 @@ impl Cpu {
             }
             insn::Insn::And(a, b, c) => self.halt("instruction not implemented: and"),
             insn::Insn::Call(a) => self.halt("instruction not implemented: call"),
-            insn::Insn::Eq(a, b, c) => self.halt("instruction not implemented: eq"),
-            insn::Insn::Gt(a, b, c) => self.halt("instruction not implemented: gt"),
+            insn::Insn::Eq(a, b, c) => {
+                let valb = self.resolve_addr(b);
+                let valc = self.resolve_addr(c);
+                if valb == valc {
+                    self.write(a, 1);
+                } else {
+                    self.write(a, 0);
+                }
+            }
+            insn::Insn::Gt(a, b, c) => {
+                let valb = self.resolve_addr(b);
+                let valc = self.resolve_addr(c);
+                if valb > valc {
+                    self.write(a, 1);
+                } else {
+                    self.write(a, 0);
+                }
+            }
             insn::Insn::Halt => self.halt("Reached Halt instruction"),
             insn::Insn::In(a) => self.halt("instruction not implemented: in"),
             insn::Insn::Jmp(a) => {
