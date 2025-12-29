@@ -179,7 +179,13 @@ impl Cpu {
     pub fn step(&mut self) {
         let Some(insn) = insn::get(self) else { return };
         match insn {
-            insn::Insn::Add(a, b, c) => self.halt("instruction not implemented: add"),
+            insn::Insn::Add(a, b, c) => {
+                // We are expecting a to be a register, it will be checked
+                // when writting
+                let valb = self.resolve_addr(b);
+                let valc = self.resolve_addr(c);
+                self.write(a, valb + valc);
+            }
             insn::Insn::And(a, b, c) => self.halt("instruction not implemented: and"),
             insn::Insn::Call(a) => self.halt("instruction not implemented: call"),
             insn::Insn::Eq(a, b, c) => self.halt("instruction not implemented: eq"),
