@@ -238,7 +238,7 @@ impl Cpu {
                 if valb == valc {
                     vprint!(
                         verbose,
-                        "IP {:05} (0x{:04x}), Eq: Set {a} to 1",
+                        "IP {:05} (0x{:04x}), Eq: set 0x{a:04x} to 1",
                         self.ip,
                         self.ip
                     );
@@ -246,7 +246,7 @@ impl Cpu {
                 } else {
                     vprint!(
                         verbose,
-                        "IP {:05} (0x{:04x}), Eq: Set {a} to 0",
+                        "IP {:05} (0x{:04x}), Eq: set 0x{a:04x} to 0",
                         self.ip,
                         self.ip
                     );
@@ -259,7 +259,7 @@ impl Cpu {
                 if valb > valc {
                     vprint!(
                         verbose,
-                        "IP {:05} (0x{:04x}), Gt: Set {a} to 1",
+                        "IP {:05} (0x{:04x}), Gt: set 0x{a:04x} to 1",
                         self.ip,
                         self.ip
                     );
@@ -267,7 +267,7 @@ impl Cpu {
                 } else {
                     vprint!(
                         verbose,
-                        "IP {:05} (0x{:04x}), Gt: Set {a} to 0",
+                        "IP {:05} (0x{:04x}), Gt: set 0x{a:04x} to 0",
                         self.ip,
                         self.ip
                     );
@@ -281,7 +281,7 @@ impl Cpu {
                 let value = self.resolve_addr(a);
                 vprint!(
                     verbose,
-                    "IP {:05} (0x{:04x}), Jmp: set ip to {value}",
+                    "IP {:05} (0x{:04x}), Jmp: set ip to 0x{value:04x}",
                     self.ip,
                     self.ip
                 );
@@ -295,7 +295,7 @@ impl Cpu {
                     self.set_ip(addr);
                     vprint!(
                         verbose,
-                        "IP {:05} (0x{:04x}), Jt: set ip to {addr} (cond = {cond})",
+                        "IP {:05} (0x{:04x}), Jt: set ip to 0x{addr:04x} (cond = {cond})",
                         self.ip,
                         self.ip
                     );
@@ -316,7 +316,7 @@ impl Cpu {
                     self.set_ip(addr);
                     vprint!(
                         verbose,
-                        "IP {:05} (0x{:04x}), Jf: set ip to {addr} (cond = {cond})",
+                        "IP {:05} (0x{:04x}), Jf: set ip to 0x{addr:04x} (cond = {cond})",
                         self.ip,
                         self.ip
                     );
