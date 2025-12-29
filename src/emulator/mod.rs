@@ -1,5 +1,13 @@
 mod insn;
 
+macro_rules! vprint {
+    ($verbose:expr, $($arg:tt)*) => {
+        if $verbose {
+            println!($($arg)*);
+        }
+    };
+}
+
 mod layout {
     /// Total number of addressable memory words.
     /// Memory addresses range from 0 to MEM_SIZE - 1.
@@ -185,7 +193,7 @@ impl Cpu {
         self.state = State::Stopped;
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self, verbose: bool) {
         let Some(insn) = insn::get(self) else { return };
         match insn {
             insn::Insn::Add(a, b, c) => {
@@ -193,24 +201,33 @@ impl Cpu {
                 // when writting
                 let valb = self.resolve_addr(b) as usize;
                 let valc = self.resolve_addr(c) as usize;
+                vprint!(verbose, "Add {a} {valb} {valc}");
                 self.write(a, u16::try_from((valb + valc) % layout::MEM_SIZE).unwrap());
             }
             insn::Insn::And(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
+                vprint!(verbose, "And {a} {valb} {valc}");
                 self.write(a, valb & valc);
             }
             insn::Insn::Call(a) => {
                 self.stack.push(u16::try_from(self.ip).unwrap());
                 let addr = self.resolve_addr(a);
+                vprint!(
+                    verbose,
+                    "Call: Push {} on the stack, set ip to {addr}",
+                    self.ip
+                );
                 self.set_ip(addr)
             }
             insn::Insn::Eq(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
                 if valb == valc {
+                    vprint!(verbose, "Eq: Set {a} to 1");
                     self.write(a, 1);
                 } else {
+                    vprint!(verbose, "Eq: Set {a} to 0");
                     self.write(a, 0);
                 }
             }
@@ -218,8 +235,10 @@ impl Cpu {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
                 if valb > valc {
+                    vprint!(verbose, "Gt: Set {a} to 1");
                     self.write(a, 1);
                 } else {
+                    vprint!(verbose, "Gt: Set {a} to 0");
                     self.write(a, 0);
                 }
             }
@@ -228,6 +247,7 @@ impl Cpu {
             insn::Insn::Jmp(a) => {
                 // Not sure that address to jmp can be register
                 let value = self.resolve_addr(a);
+                vprint!(verbose, "Jmp: set ip to {value}");
                 self.set_ip(value)
             }
             insn::Insn::Jt(a, b) => {
@@ -235,7 +255,10 @@ impl Cpu {
                 if cond != 0 {
                     // Not sure that address to jmp can be register
                     let addr = self.resolve_addr(b);
-                    self.set_ip(addr)
+                    self.set_ip(addr);
+                    vprint!(verbose, "Jt: set ip to {addr} (cond = {cond})");
+                } else {
+                    vprint!(verbose, "Jt: ip not updated (cond = {cond})");
                 }
             }
             insn::Insn::Jf(a, b) => {
@@ -243,43 +266,56 @@ impl Cpu {
                 if cond == 0 {
                     // Not sure that address to jmp can be register
                     let addr = self.resolve_addr(b);
-                    self.set_ip(addr)
+                    self.set_ip(addr);
+                    vprint!(verbose, "Jf: set ip to {addr} (cond = {cond})");
+                } else {
+                    vprint!(verbose, "Jf: ip not updated (cond = {cond})");
                 }
             }
             insn::Insn::Mod(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
+                vprint!(verbose, "Mod: {a} = {}", valb % valc);
                 self.write(a, valb % valc);
             }
             insn::Insn::Mult(a, b, c) => {
                 let valb = self.resolve_addr(b) as usize;
                 let valc = self.resolve_addr(c) as usize;
-                self.write(a, u16::try_from((valb * valc) % layout::MEM_SIZE).unwrap());
+                let res = u16::try_from((valb * valc) % layout::MEM_SIZE).unwrap();
+                vprint!(verbose, "Mult: {a} = {res}");
+                self.write(a, res);
             }
             insn::Insn::Noop => {}
             insn::Insn::Not(a, b) => {
                 let value = self.resolve_addr(b);
-                self.write(a, !value & 0x7FFF)
+                let res = !value & 0x7FFF;
+                vprint!(verbose, "Not: {a} = {res}");
+                self.write(a, res);
             }
             insn::Insn::Or(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
+                let res = valb | valc;
+                vprint!(verbose, "Or: {a} = {res}");
                 self.write(a, valb | valc);
             }
             insn::Insn::Out(a) => print!("{a}"),
             insn::Insn::Pop(a) => {
                 if let Some(value) = self.stack.pop() {
+                    vprint!(verbose, "Pop: {value}");
                     self.write(a, value);
                 } else {
                     self.halt("cannot pop empty stack");
                 }
             }
             insn::Insn::Push(a) => {
-                let val = self.resolve_addr(a);
-                self.stack.push(val);
+                let value = self.resolve_addr(a);
+                vprint!(verbose, "Push: {value}");
+                self.stack.push(value);
             }
             insn::Insn::Ret => {
                 if let Some(addr) = self.stack.pop() {
+                    vprint!(verbose, "Ret: set ip to {addr}");
                     self.set_ip(addr);
                 } else {
                     self.halt("cannot pop empty stack");
@@ -287,25 +323,38 @@ impl Cpu {
             }
             insn::Insn::Rmem(a, b) => {
                 let value = self.read(b);
-                println!(
+                vprint!(
+                    verbose,
                     "ip {:05} (0x{:05x}): read {value} and try to write it at 0x{:05x}",
-                    self.ip, self.ip, a
+                    self.ip,
+                    self.ip,
+                    a
                 );
                 self.write(a, value);
             }
             insn::Insn::Wmem(a, b) => {
                 let value = self.resolve_addr(b);
+                vprint!(
+                    verbose,
+                    "ip {:05} (0x{:05x}): write {value} into memory at 0x{:05x}",
+                    self.ip,
+                    self.ip,
+                    a
+                );
                 self.write(a, value);
             }
-            insn::Insn::Set(a, b) => self.write(a, b),
+            insn::Insn::Set(a, b) => {
+                vprint!(verbose, "Set register 0x{a:04x} to 0x{b:04x}");
+                self.write(a, b)
+            }
         }
     }
 
-    pub fn cont(&mut self) {
+    pub fn cont(&mut self, verbose: bool) {
         self.state = State::Running;
 
         while self.state == State::Running {
-            self.step();
+            self.step(verbose);
             // Check if there is a breakpoint
             if let Some(bp) = self.breakpoint
                 && bp as usize == self.ip
@@ -331,8 +380,8 @@ impl Cpu {
         }
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, verbose: bool) {
         self.reset();
-        self.cont();
+        self.cont(verbose);
     }
 }

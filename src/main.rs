@@ -57,11 +57,11 @@ fn main() -> io::Result<()> {
                     println!("Missing breakpoint integer")
                 }
             }
-            Some("c") | Some("continue") => cpu.cont(),
+            Some("c") | Some("continue") => cpu.cont(args.verbose),
             Some("p") | Some("print") => println!("{}", cpu.print()),
-            Some("r") | Some("run") => cpu.run(),
+            Some("r") | Some("run") => cpu.run(args.verbose),
             Some("q") | Some("quit") => break,
-            Some("s") | Some("step") => cpu.step(),
+            Some("s") | Some("step") => cpu.step(args.verbose),
             _ => println!("Unknown input"),
         }
     }
