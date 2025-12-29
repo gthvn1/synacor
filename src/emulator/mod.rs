@@ -201,13 +201,23 @@ impl Cpu {
                 // when writting
                 let valb = self.resolve_addr(b) as usize;
                 let valc = self.resolve_addr(c) as usize;
-                vprint!(verbose, "Add {a} {valb} {valc}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Add {a} {valb} {valc}",
+                    self.ip,
+                    self.ip
+                );
                 self.write(a, u16::try_from((valb + valc) % layout::MEM_SIZE).unwrap());
             }
             insn::Insn::And(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
-                vprint!(verbose, "And {a} {valb} {valc}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), And {a} {valb} {valc}",
+                    self.ip,
+                    self.ip
+                );
                 self.write(a, valb & valc);
             }
             insn::Insn::Call(a) => {
@@ -215,7 +225,9 @@ impl Cpu {
                 let addr = self.resolve_addr(a);
                 vprint!(
                     verbose,
-                    "Call: Push {} on the stack, set ip to {addr}",
+                    "IP {:05} (0x{:04x}), Call: Push {} on the stack, set ip to {addr}",
+                    self.ip,
+                    self.ip,
                     self.ip
                 );
                 self.set_ip(addr)
@@ -224,10 +236,20 @@ impl Cpu {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
                 if valb == valc {
-                    vprint!(verbose, "Eq: Set {a} to 1");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Eq: Set {a} to 1",
+                        self.ip,
+                        self.ip
+                    );
                     self.write(a, 1);
                 } else {
-                    vprint!(verbose, "Eq: Set {a} to 0");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Eq: Set {a} to 0",
+                        self.ip,
+                        self.ip
+                    );
                     self.write(a, 0);
                 }
             }
@@ -235,10 +257,20 @@ impl Cpu {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
                 if valb > valc {
-                    vprint!(verbose, "Gt: Set {a} to 1");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Gt: Set {a} to 1",
+                        self.ip,
+                        self.ip
+                    );
                     self.write(a, 1);
                 } else {
-                    vprint!(verbose, "Gt: Set {a} to 0");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Gt: Set {a} to 0",
+                        self.ip,
+                        self.ip
+                    );
                     self.write(a, 0);
                 }
             }
@@ -247,7 +279,12 @@ impl Cpu {
             insn::Insn::Jmp(a) => {
                 // Not sure that address to jmp can be register
                 let value = self.resolve_addr(a);
-                vprint!(verbose, "Jmp: set ip to {value}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Jmp: set ip to {value}",
+                    self.ip,
+                    self.ip
+                );
                 self.set_ip(value)
             }
             insn::Insn::Jt(a, b) => {
@@ -256,9 +293,19 @@ impl Cpu {
                     // Not sure that address to jmp can be register
                     let addr = self.resolve_addr(b);
                     self.set_ip(addr);
-                    vprint!(verbose, "Jt: set ip to {addr} (cond = {cond})");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Jt: set ip to {addr} (cond = {cond})",
+                        self.ip,
+                        self.ip
+                    );
                 } else {
-                    vprint!(verbose, "Jt: ip not updated (cond = {cond})");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Jt: ip not updated (cond = {cond})",
+                        self.ip,
+                        self.ip
+                    );
                 }
             }
             insn::Insn::Jf(a, b) => {
@@ -267,42 +314,78 @@ impl Cpu {
                     // Not sure that address to jmp can be register
                     let addr = self.resolve_addr(b);
                     self.set_ip(addr);
-                    vprint!(verbose, "Jf: set ip to {addr} (cond = {cond})");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Jf: set ip to {addr} (cond = {cond})",
+                        self.ip,
+                        self.ip
+                    );
                 } else {
-                    vprint!(verbose, "Jf: ip not updated (cond = {cond})");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Jf: ip not updated (cond = {cond})",
+                        self.ip,
+                        self.ip
+                    );
                 }
             }
             insn::Insn::Mod(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
-                vprint!(verbose, "Mod: {a} = {}", valb % valc);
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Mod: {a} = {}",
+                    valb % valc,
+                    self.ip,
+                    self.ip
+                );
                 self.write(a, valb % valc);
             }
             insn::Insn::Mult(a, b, c) => {
                 let valb = self.resolve_addr(b) as usize;
                 let valc = self.resolve_addr(c) as usize;
                 let res = u16::try_from((valb * valc) % layout::MEM_SIZE).unwrap();
-                vprint!(verbose, "Mult: {a} = {res}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Mult: {a} = {res}",
+                    self.ip,
+                    self.ip
+                );
                 self.write(a, res);
             }
-            insn::Insn::Noop => vprint!(verbose, "Noop"),
+            insn::Insn::Noop => vprint!(verbose, "IP {:05} (0x{:04x}), Noop", self.ip, self.ip),
             insn::Insn::Not(a, b) => {
                 let value = self.resolve_addr(b);
                 let res = !value & 0x7FFF;
-                vprint!(verbose, "Not: {a} = {res}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Not: {a} = {res}",
+                    self.ip,
+                    self.ip
+                );
                 self.write(a, res);
             }
             insn::Insn::Or(a, b, c) => {
                 let valb = self.resolve_addr(b);
                 let valc = self.resolve_addr(c);
                 let res = valb | valc;
-                vprint!(verbose, "Or: {a} = {res}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Or: {a} = {res}",
+                    self.ip,
+                    self.ip
+                );
                 self.write(a, valb | valc);
             }
             insn::Insn::Out(a) => print!("{a}"),
             insn::Insn::Pop(a) => {
                 if let Some(value) = self.stack.pop() {
-                    vprint!(verbose, "Pop: {value}");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Pop: {value}",
+                        self.ip,
+                        self.ip
+                    );
                     self.write(a, value);
                 } else {
                     self.halt("cannot pop empty stack");
@@ -310,12 +393,22 @@ impl Cpu {
             }
             insn::Insn::Push(a) => {
                 let value = self.resolve_addr(a);
-                vprint!(verbose, "Push: {value}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Push: {value}",
+                    self.ip,
+                    self.ip
+                );
                 self.stack.push(value);
             }
             insn::Insn::Ret => {
                 if let Some(addr) = self.stack.pop() {
-                    vprint!(verbose, "Ret: set ip to {addr}");
+                    vprint!(
+                        verbose,
+                        "IP {:05} (0x{:04x}), Ret: set ip to {addr}",
+                        self.ip,
+                        self.ip
+                    );
                     self.set_ip(addr);
                 } else {
                     self.halt("cannot pop empty stack");
@@ -325,7 +418,7 @@ impl Cpu {
                 let value = self.read(b);
                 vprint!(
                     verbose,
-                    "ip {:05} (0x{:05x}): read {value} and try to write it at 0x{:05x}",
+                    "IP {:05} (0x{:04x}), Rmem: read {value} and try to write it at 0x{:05x}",
                     self.ip,
                     self.ip,
                     a
@@ -336,7 +429,7 @@ impl Cpu {
                 let value = self.resolve_addr(b);
                 vprint!(
                     verbose,
-                    "ip {:05} (0x{:05x}): write {value} into memory at 0x{:05x}",
+                    "IP {:05} (0x{:04x}), Wmem: write {value} into memory at 0x{:05x}",
                     self.ip,
                     self.ip,
                     a
@@ -344,7 +437,12 @@ impl Cpu {
                 self.write(a, value);
             }
             insn::Insn::Set(a, b) => {
-                vprint!(verbose, "Set register 0x{a:04x} to 0x{b:04x}");
+                vprint!(
+                    verbose,
+                    "IP {:05} (0x{:04x}), Set: register 0x{a:04x} to 0x{b:04x}",
+                    self.ip,
+                    self.ip
+                );
                 self.write(a, b)
             }
         }
