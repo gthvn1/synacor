@@ -405,7 +405,7 @@ impl Cpu {
             insn::Insn::Rmem(a, b) => {
                 // We can have:
                 //   Rmem 8000 034B => Read the content of Memory[034B] and write it
-                //   Rmem 8000 8002 => Read the content of Ref 8002 that gives you an addr
+                //   Rmem 8000 8002 => Read the content of Reg 8002 that gives you an addr
                 //                     and read the content of Memory[addr] and write it
                 let value = self.read(b);
                 vprint!(
@@ -425,16 +425,16 @@ impl Cpu {
                 }
             }
             insn::Insn::Wmem(a, b) => {
-                // TODO: fixit it doesn't work
-                let value = self.resolve_addr(b);
+                let value = self.read(b);
+                let addr = self.read(a);
                 vprint!(
                     verbose,
                     "IP {:05} (0x{:04x}), Wmem: write {value} into memory at 0x{:04x}",
                     self.ip,
                     self.ip,
-                    a
+                    addr
                 );
-                self.write(a, value);
+                self.write(addr, value);
             }
             insn::Insn::Set(a, b) => {
                 vprint!(
