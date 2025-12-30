@@ -188,6 +188,9 @@ impl Cpu {
         }
         out.push_str("\n");
 
+        out.push_str("   -- Stack (last 10) --\n   ");
+        let start = self.stack.len().saturating_sub(10);
+        out.push_str(&format!("{:?}", &self.stack[start..]));
         out
     }
 
