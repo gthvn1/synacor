@@ -11,29 +11,29 @@ macro_rules! vprint {
 mod layout {
     /// Total number of addressable memory words.
     /// Memory addresses range from 0 to MEM_SIZE - 1.
-    pub const MEM_SIZE: usize = 32_768;
+    pub const MEM_SIZE: u16 = 32_768;
 
     /// Lowest valid memory address.
-    pub const MEM_MIN: usize = 0;
+    pub const MEM_MIN: u16 = 0;
 
     /// Highest valid memory address.
-    pub const MEM_MAX: usize = MEM_SIZE - 1;
+    pub const MEM_MAX: u16 = MEM_SIZE - 1;
 
     /// Number of general-purpose registers.
-    pub const NUM_REGS: usize = 8;
+    pub const NUM_REGS: u16 = 8;
 
     /// Lowest address mapped to a register.
-    pub const REG_MIN: usize = MEM_SIZE;
+    pub const REG_MIN: u16 = MEM_SIZE;
 
     /// Highest address mapped to a register.
-    pub const REG_MAX: usize = REG_MIN + NUM_REGS - 1;
+    pub const REG_MAX: u16 = REG_MIN + NUM_REGS - 1;
 
     pub fn is_mem(addr: u16) -> bool {
-        (MEM_MIN..=MEM_MAX).contains(&(addr as usize))
+        (MEM_MIN..=MEM_MAX).contains(&addr)
     }
 
     pub fn is_reg(addr: u16) -> bool {
-        (REG_MIN..=REG_MAX).contains(&(addr as usize))
+        (REG_MIN..=REG_MAX).contains(&addr)
     }
 }
 
@@ -44,10 +44,10 @@ enum State {
 }
 
 pub struct Cpu {
-    pub mem: [u16; layout::MEM_SIZE], // The size will depend of the ROMs
-    pub regs: [u16; layout::NUM_REGS],
+    pub mem: [u16; layout::MEM_SIZE as usize], // The size will depend of the ROMs
+    pub regs: [u16; layout::NUM_REGS as usize],
     pub stack: Vec<u16>,
-    pub ip: usize,      // Instruction pointer
+    pub ip: u16,        // Instruction pointer
     pub footprint: u16, // keep the program's memory footprint
     state: State,
     breakpoint: Option<u16>,
@@ -66,11 +66,11 @@ impl Cpu {
         // Programs are loaded into memory starting at address 0
         assert!(roms.len().is_multiple_of(2), "ROMs size is odd");
         let footprint = roms.len() / 2;
-        assert!(footprint <= layout::MEM_MAX);
+        assert!(footprint <= layout::MEM_MAX as usize);
 
         let mut cpu = Cpu {
-            mem: [0; layout::MEM_SIZE],
-            regs: [0; layout::NUM_REGS],
+            mem: [0; layout::MEM_SIZE as usize],
+            regs: [0; layout::NUM_REGS as usize],
             stack: vec![],
             ip: 0,
             footprint: footprint as u16,
@@ -103,7 +103,7 @@ impl Cpu {
         if layout::is_mem(addr) {
             addr
         } else if layout::is_reg(addr) {
-            let reg_id = addr as usize - layout::REG_MIN;
+            let reg_id = (addr - layout::REG_MIN) as usize;
             self.regs[reg_id]
         } else {
             panic!("{addr} is not valid memory");
@@ -116,7 +116,7 @@ impl Cpu {
         if layout::is_mem(addr) {
             self.mem[addr as usize]
         } else if layout::is_reg(addr) {
-            let reg_id = addr as usize - layout::REG_MIN;
+            let reg_id = (addr - layout::REG_MIN) as usize;
             self.regs[reg_id]
         } else {
             panic!("{addr} is not valid memory");
@@ -127,7 +127,7 @@ impl Cpu {
     // at this address, otherwise it returns the content of the register.
     fn write(&mut self, addr: u16, value: u16) {
         if layout::is_reg(addr) {
-            let reg_id = addr as usize - layout::REG_MIN;
+            let reg_id = (addr - layout::REG_MIN) as usize;
             self.regs[reg_id] = value;
         } else if layout::is_mem(addr) {
             // It looks like we can write memory
@@ -146,15 +146,15 @@ impl Cpu {
         if self.ip > layout::MEM_MAX {
             panic!("IP {} is above max mem {}", self.ip, layout::MEM_MAX);
         }
-        let word = self.mem[self.ip];
+        let word = self.mem[self.ip as usize];
         self.ip += 1;
         word
     }
 
     fn set_ip(&mut self, ip: u16) {
-        assert!(ip as usize >= layout::MEM_MIN);
-        assert!(ip as usize <= layout::MEM_MAX);
-        self.ip = ip as usize;
+        assert!(ip >= layout::MEM_MIN);
+        assert!(ip <= layout::MEM_MAX);
+        self.ip = ip;
     }
 
     pub fn print(&self) -> String {
@@ -202,15 +202,15 @@ impl Cpu {
             insn::Insn::Add(a, b, c) => {
                 // We are expecting a to be a register, it will be checked
                 // when writting
-                let valb = self.resolve_addr(b) as usize;
-                let valc = self.resolve_addr(c) as usize;
+                let valb = self.resolve_addr(b);
+                let valc = self.resolve_addr(c);
                 vprint!(
                     verbose,
                     "IP {:05} (0x{:04x}), Add {a} {valb} {valc}",
                     self.ip,
                     self.ip
                 );
-                self.write(a, u16::try_from((valb + valc) % layout::MEM_SIZE).unwrap());
+                self.write(a, (valb + valc) % layout::MEM_SIZE);
             }
             insn::Insn::And(a, b, c) => {
                 let valb = self.resolve_addr(b);
@@ -224,7 +224,7 @@ impl Cpu {
                 self.write(a, valb & valc);
             }
             insn::Insn::Call(a) => {
-                self.stack.push(u16::try_from(self.ip).unwrap());
+                self.stack.push(self.ip);
                 let addr = self.resolve_addr(a);
                 vprint!(
                     verbose,
@@ -333,9 +333,11 @@ impl Cpu {
                 self.write(a, valb % valc);
             }
             insn::Insn::Mult(a, b, c) => {
+                // Use usize otherwise we hit attempt to multiply with overflow
                 let valb = self.resolve_addr(b) as usize;
                 let valc = self.resolve_addr(c) as usize;
-                let res = u16::try_from((valb * valc) % layout::MEM_SIZE).unwrap();
+                let res = (valb * valc) % (layout::MEM_SIZE as usize);
+                let res = u16::try_from(res).unwrap();
                 vprint!(
                     verbose,
                     "IP {:05} (0x{:04x}), Mult: {a} = {res}",
@@ -429,24 +431,26 @@ impl Cpu {
             }
             insn::Insn::Wmem(a, b) => {
                 let addr = self.read(a);
+                let value = self.resolve_addr(b);
                 vprint!(
                     verbose,
                     "IP {:05} (0x{:04x}), Wmem: write {} into memory at 0x{:04x}",
                     self.ip,
                     self.ip,
-                    b,
+                    value,
                     addr
                 );
-                self.write(addr, b);
+                self.write(addr, value);
             }
             insn::Insn::Set(a, b) => {
+                let value = self.resolve_addr(b);
                 vprint!(
                     verbose,
-                    "IP {:05} (0x{:04x}), Set: register 0x{a:04x} to 0x{b:04x}",
+                    "IP {:05} (0x{:04x}), Set: register 0x{a:04x} to 0x{value:04x}",
                     self.ip,
                     self.ip
                 );
-                self.write(a, b)
+                self.write(a, value)
             }
         }
     }
@@ -458,7 +462,7 @@ impl Cpu {
             self.step(verbose);
             // Check if there is a breakpoint
             if let Some(bp) = self.breakpoint
-                && bp as usize == self.ip
+                && bp == self.ip
             {
                 println!("reached breakpoints at {bp}");
                 break;
@@ -468,7 +472,7 @@ impl Cpu {
 
     pub fn disassemble(&mut self) {
         self.reset();
-        let upper = self.footprint as usize;
+        let upper = self.footprint;
 
         println!("Disassemble from {} to {}", layout::MEM_MIN, upper);
         while self.ip <= upper {
