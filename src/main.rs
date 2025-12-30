@@ -62,7 +62,7 @@ fn main() -> io::Result<()> {
             Some("read") => {
                 if let Some(arg) = parts.next() {
                     match arg.parse::<u16>() {
-                        Ok(n) => println!("[0x{n:04x}] => {}", cpu.read(n)),
+                        Ok(n) => println!("[0x{n:04x}] => {} (0x{:04x})", cpu.read(n), cpu.read(n)),
                         Err(_) => {
                             println!("Invalid memory address")
                         }

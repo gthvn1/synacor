@@ -403,6 +403,10 @@ impl Cpu {
                 }
             }
             insn::Insn::Rmem(a, b) => {
+                // We can have:
+                //   Rmem 8000 034B => Read the content of Memory[034B] and write it
+                //   Rmem 8000 8002 => Read the content of Ref 8002 that gives you an addr
+                //                     and read the content of Memory[addr] and write it
                 let value = self.read(b);
                 vprint!(
                     verbose,
@@ -411,9 +415,17 @@ impl Cpu {
                     self.ip,
                     a
                 );
-                self.write(a, value);
+
+                if layout::is_mem(b) {
+                    self.write(a, value);
+                } else if layout::is_reg(b) {
+                    self.write(a, self.read(value));
+                } else {
+                    self.halt("Use Rmem with out of memory address");
+                }
             }
             insn::Insn::Wmem(a, b) => {
+                // TODO: fixit it doesn't work
                 let value = self.resolve_addr(b);
                 vprint!(
                     verbose,
