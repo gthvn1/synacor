@@ -129,8 +129,11 @@ impl Cpu {
         if layout::is_reg(addr) {
             let reg_id = addr as usize - layout::REG_MIN;
             self.regs[reg_id] = value;
+        } else if layout::is_mem(addr) {
+            // It looks like we can write memory
+            self.mem[addr as usize] = value;
         } else {
-            panic!("{addr} is not a register, only registers are writtable");
+            panic!("write, {addr} is out of memory");
         }
     }
 
@@ -407,7 +410,14 @@ impl Cpu {
                 //   Rmem 8000 034B => Read the content of Memory[034B] and write it
                 //   Rmem 8000 8002 => Read the content of Reg 8002 that gives you an addr
                 //                     and read the content of Memory[addr] and write it
-                let value = self.read(b);
+                let value = if layout::is_mem(b) {
+                    self.read(b)
+                } else if layout::is_reg(b) {
+                    let addr = self.read(b);
+                    self.read(addr)
+                } else {
+                    panic!("Rmem error: Invalid address {b}");
+                };
                 vprint!(
                     verbose,
                     "IP {:05} (0x{:04x}), Rmem: read {value} and try to write it at 0x{:04x}",
@@ -415,26 +425,19 @@ impl Cpu {
                     self.ip,
                     a
                 );
-
-                if layout::is_mem(b) {
-                    self.write(a, value);
-                } else if layout::is_reg(b) {
-                    self.write(a, self.read(value));
-                } else {
-                    self.halt("Use Rmem with out of memory address");
-                }
+                self.write(a, value);
             }
             insn::Insn::Wmem(a, b) => {
-                let value = self.read(b);
                 let addr = self.read(a);
                 vprint!(
                     verbose,
-                    "IP {:05} (0x{:04x}), Wmem: write {value} into memory at 0x{:04x}",
+                    "IP {:05} (0x{:04x}), Wmem: write {} into memory at 0x{:04x}",
                     self.ip,
                     self.ip,
+                    b,
                     addr
                 );
-                self.write(addr, value);
+                self.write(addr, b);
             }
             insn::Insn::Set(a, b) => {
                 vprint!(
